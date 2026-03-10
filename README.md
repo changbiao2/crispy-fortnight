@@ -17,10 +17,10 @@
 - 前端：Vue3 + Element Plus
 - 后端：Spring Boot + MyBatis
 - 数据库：MySQL 8.0
-- 设计工具：Enterprise Architect + Axure + PowerDesigner
+- 设计工具：draw.io + Axure + PowerDesigner + ApiFox
 
 ## 目录说明
 - `docs/` - 项目文档
-- `design/` - 设计文件（EA、Axure等）
+- `design/` - 设计文件（draw.io、Axure等）
 - `sql/` - 数据库脚本
 - `src/` - 程序代码
