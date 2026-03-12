@@ -1,0 +1,1298 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "网上购物网站 API",
+    "description": "## 概述\n网上购物网站的商品展示、查询、购物车模块 RESTful API 接口文档。\n\n## 模块说明\n- **商品模块**：商品列表、商品详情、商品搜索\n- **购物车模块**：购物车查看、添加、修改、删除、清空\n\n## 认证方式\n购物车相关接口需要在请求头中携带 `Authorization: Bearer {token}`\n\n## 统一响应格式\n```json\n{\n  \"code\": 200,\n  \"message\": \"操作成功\",\n  \"data\": { ... }\n}\n```\n\n## 状态码说明\n| 状态码 | 说明 |\n|--------|------|\n| 200 | 操作成功 |\n| 400 | 请求参数错误 |\n| 401 | 未登录或 token 过期 |\n| 403 | 无权限 |\n| 404 | 资源不存在 |\n| 500 | 服务器内部错误 |\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "开发团队",
+      "email": "team@shopping.com"
+    }
+  },
+  "tags": [
+    {
+      "name": "商品管理"
+    },
+    {
+      "name": "购物车管理"
+    }
+  ],
+  "paths": {
+    "/api/products": {
+      "get": {
+        "summary": "获取商品列表",
+        "deprecated": false,
+        "description": "分页获取商品列表，支持按分类筛选、关键词搜索、价格区间过滤、排序等功能。\n不需要登录即可访问。\n",
+        "operationId": "getProductList",
+        "tags": [
+          "商品管理"
+        ],
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "query",
+            "description": "分类ID，传入则只返回该分类下的商品",
+            "required": false,
+            "example": "CAT004",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "搜索关键词，模糊匹配商品名称和描述",
+            "required": false,
+            "example": "iPhone",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minPrice",
+            "in": "query",
+            "description": "最低价格（包含）",
+            "required": false,
+            "example": 100,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "description": "最高价格（包含）",
+            "required": false,
+            "example": 10000,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "排序字段：\n- `price` 按价格排序\n- `sales` 按销量排序\n- `createTime` 按上架时间排序\n",
+            "required": false,
+            "example": "price",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "price",
+                "sales",
+                "createTime"
+              ],
+              "default": "createTime"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "description": "排序方式：\n- `asc` 升序\n- `desc` 降序\n",
+            "required": false,
+            "example": "asc",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码，从1开始",
+            "required": false,
+            "example": 1,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "每页数量，最大50",
+            "required": false,
+            "example": 10,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ProductPageResult"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "code": 200,
+                  "message": "获取成功",
+                  "data": {
+                    "total": 100,
+                    "page": 1,
+                    "pageSize": 10,
+                    "totalPages": 10,
+                    "list": [
+                      {
+                        "productId": "PROD001",
+                        "name": "iPhone 15 Pro",
+                        "categoryId": "CAT004",
+                        "categoryName": "手机",
+                        "price": 8999,
+                        "stock": 100,
+                        "description": "Apple iPhone 15 Pro 256GB",
+                        "imageUrl": "/images/iphone15.jpg",
+                        "status": 1,
+                        "createTime": "2026-01-15 10:30:00"
+                      },
+                      {
+                        "productId": "PROD002",
+                        "name": "MacBook Pro 14",
+                        "categoryId": "CAT005",
+                        "categoryName": "电脑",
+                        "price": 14999,
+                        "stock": 50,
+                        "description": "Apple MacBook Pro 14英寸 M3芯片",
+                        "imageUrl": "/images/macbook14.jpg",
+                        "status": 1,
+                        "createTime": "2026-01-10 09:00:00"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "价格区间参数错误，minPrice不能大于maxPrice",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "服务器内部错误",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/products/{productId}": {
+      "get": {
+        "summary": "获取商品详情",
+        "deprecated": false,
+        "description": "根据商品ID获取商品的完整详细信息，包括商品基本信息和图片列表。\n不需要登录即可访问。\n",
+        "operationId": "getProductDetail",
+        "tags": [
+          "商品管理"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "description": "商品ID",
+            "required": true,
+            "example": "PROD001",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ProductDetail"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "code": 200,
+                  "message": "获取成功",
+                  "data": {
+                    "productId": "PROD001",
+                    "name": "iPhone 15 Pro",
+                    "categoryId": "CAT004",
+                    "categoryName": "手机",
+                    "price": 8999,
+                    "stock": 100,
+                    "description": "Apple iPhone 15 Pro 256GB 原色钛金属，A17 Pro芯片，4800万像素主摄",
+                    "imageUrl": "/images/iphone15.jpg",
+                    "images": [
+                      {
+                        "imageId": "IMG001",
+                        "imageUrl": "/images/iphone15_1.jpg",
+                        "sortOrder": 1
+                      },
+                      {
+                        "imageId": "IMG002",
+                        "imageUrl": "/images/iphone15_2.jpg",
+                        "sortOrder": 2
+                      },
+                      {
+                        "imageId": "IMG003",
+                        "imageUrl": "/images/iphone15_3.jpg",
+                        "sortOrder": 3
+                      }
+                    ],
+                    "status": 1,
+                    "createTime": "2026-01-15 10:30:00",
+                    "updateTime": "2026-02-20 14:20:00"
+                  }
+                }
+              }
+            },
+            "headers": {}
+          },
+          "404": {
+            "description": "商品不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "商品不存在",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "服务器内部错误",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/products/search": {
+      "get": {
+        "summary": "搜索商品",
+        "deprecated": false,
+        "description": "根据关键词搜索商品，模糊匹配商品名称和描述。\n不需要登录即可访问。\n",
+        "operationId": "searchProducts",
+        "tags": [
+          "商品管理"
+        ],
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "搜索关键词（必填）",
+            "required": true,
+            "example": "华为手机",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码，从1开始",
+            "required": false,
+            "example": 1,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "每页数量，最大50",
+            "required": false,
+            "example": 10,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "搜索成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ProductPageResult"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "code": 200,
+                  "message": "搜索成功",
+                  "data": {
+                    "total": 2,
+                    "page": 1,
+                    "pageSize": 10,
+                    "totalPages": 1,
+                    "list": [
+                      {
+                        "productId": "PROD004",
+                        "name": "华为 Mate 60 Pro",
+                        "categoryId": "CAT004",
+                        "categoryName": "手机",
+                        "price": 6999,
+                        "stock": 80,
+                        "description": "华为 Mate 60 Pro 512GB 雅丹黑",
+                        "imageUrl": "/images/mate60.jpg",
+                        "status": 1,
+                        "createTime": "2026-01-12 15:00:00"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "搜索关键词不能为空",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/cart": {
+      "get": {
+        "summary": "获取购物车列表",
+        "deprecated": false,
+        "description": "获取当前登录用户的购物车商品列表，包含每个商品的小计和购物车总价。\n**需要登录**。\n",
+        "operationId": "getCartList",
+        "tags": [
+          "购物车管理"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CartResult"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "code": 200,
+                  "message": "获取成功",
+                  "data": {
+                    "items": [
+                      {
+                        "cartId": "CART001",
+                        "productId": "PROD001",
+                        "productName": "iPhone 15 Pro",
+                        "productImage": "/images/iphone15.jpg",
+                        "price": 8999,
+                        "quantity": 1,
+                        "subtotal": 8999,
+                        "stock": 100,
+                        "status": 1
+                      },
+                      {
+                        "cartId": "CART002",
+                        "productId": "PROD003",
+                        "productName": "AirPods Pro 2",
+                        "productImage": "/images/airpods.jpg",
+                        "price": 1799,
+                        "quantity": 2,
+                        "subtotal": 3598,
+                        "stock": 200,
+                        "status": 1
+                      },
+                      {
+                        "cartId": "CART003",
+                        "productId": "PROD008",
+                        "productName": "三只松鼠坚果礼盒",
+                        "productImage": "/images/nuts.jpg",
+                        "price": 128,
+                        "quantity": 3,
+                        "subtotal": 384,
+                        "stock": 1000,
+                        "status": 1
+                      }
+                    ],
+                    "totalCount": 3,
+                    "totalQuantity": 6,
+                    "totalAmount": 12981
+                  }
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "未登录或token过期",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "请先登录",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "添加商品到购物车",
+        "deprecated": false,
+        "description": "将指定商品添加到当前用户的购物车中。\n- 如果购物车中已有该商品，则累加数量\n- 添加前会检查商品库存是否充足\n- **需要登录**\n",
+        "operationId": "addToCart",
+        "tags": [
+          "购物车管理"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCartRequest"
+              },
+              "example": {
+                "productId": "PROD001",
+                "quantity": 1
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "添加成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CartItem"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "code": 200,
+                  "message": "添加成功",
+                  "data": {
+                    "cartId": "CART008",
+                    "productId": "PROD001",
+                    "productName": "iPhone 15 Pro",
+                    "productImage": "/images/iphone15.jpg",
+                    "price": 8999,
+                    "quantity": 1,
+                    "subtotal": 8999,
+                    "stock": 100,
+                    "status": 1
+                  }
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "2": {
+                    "summary": "参数缺失",
+                    "value": {
+                      "code": 400,
+                      "message": "商品ID不能为空",
+                      "data": null
+                    }
+                  },
+                  "3": {
+                    "summary": "数量错误",
+                    "value": {
+                      "code": 400,
+                      "message": "商品数量必须大于0",
+                      "data": null
+                    }
+                  },
+                  "4": {
+                    "summary": "库存不足",
+                    "value": {
+                      "code": 400,
+                      "message": "商品库存不足，当前库存：5",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "未登录",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "请先登录",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          },
+          "404": {
+            "description": "商品不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "商品不存在或已下架",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/cart/{cartId}": {
+      "put": {
+        "summary": "修改购物车商品数量",
+        "deprecated": false,
+        "description": "修改购物车中指定商品的数量。\n- 数量必须大于0\n- 修改前会检查商品库存是否充足\n- 修改后自动重新计算小计金额\n- **需要登录**\n",
+        "operationId": "updateCartQuantity",
+        "tags": [
+          "购物车管理"
+        ],
+        "parameters": [
+          {
+            "name": "cartId",
+            "in": "path",
+            "description": "购物车项ID",
+            "required": true,
+            "example": "CART001",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCartRequest"
+              },
+              "example": {
+                "quantity": 3
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "修改成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CartItem"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "code": 200,
+                  "message": "修改成功",
+                  "data": {
+                    "cartId": "CART001",
+                    "productId": "PROD001",
+                    "productName": "iPhone 15 Pro",
+                    "productImage": "/images/iphone15.jpg",
+                    "price": 8999,
+                    "quantity": 3,
+                    "subtotal": 26997,
+                    "stock": 100,
+                    "status": 1
+                  }
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "2": {
+                    "summary": "数量错误",
+                    "value": {
+                      "code": 400,
+                      "message": "商品数量必须大于0",
+                      "data": null
+                    }
+                  },
+                  "3": {
+                    "summary": "库存不足",
+                    "value": {
+                      "code": 400,
+                      "message": "商品库存不足，当前库存：5，请求数量：10",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "未登录",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "请先登录",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          },
+          "404": {
+            "description": "购物车项不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "购物车中未找到该商品",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "删除购物车商品",
+        "deprecated": false,
+        "description": "从购物车中删除指定的商品项。\n- 删除后自动重新计算购物车总价\n- **需要登录**\n",
+        "operationId": "deleteCartItem",
+        "tags": [
+          "购物车管理"
+        ],
+        "parameters": [
+          {
+            "name": "cartId",
+            "in": "path",
+            "description": "购物车项ID",
+            "required": true,
+            "example": "CART001",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "example": {
+                  "code": 200,
+                  "message": "删除成功",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "未登录",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "请先登录",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          },
+          "404": {
+            "description": "购物车项不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "购物车中未找到该商品",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/cart/clear": {
+      "delete": {
+        "summary": "清空购物车",
+        "deprecated": false,
+        "description": "清空当前用户购物车中的所有商品。\n- 清空后购物车为空\n- **需要登录**\n",
+        "operationId": "clearCart",
+        "tags": [
+          "购物车管理"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "清空成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "example": {
+                  "code": 200,
+                  "message": "购物车已清空",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "未登录",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "请先登录",
+                  "data": null
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "description": "统一API响应格式",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "响应状态码：\n- 200 操作成功\n- 400 请求参数错误\n- 401 未登录或token过期\n- 403 无权限\n- 404 资源不存在\n- 500 服务器内部错误\n",
+            "example": 200
+          },
+          "message": {
+            "type": "string",
+            "description": "响应提示信息",
+            "example": "操作成功"
+          },
+          "data": {
+            "type": "object",
+            "description": "响应数据（具体类型根据接口不同而不同）",
+            "properties": {},
+            "nullable": true
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "错误响应格式",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "错误状态码",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "description": "错误提示信息",
+            "example": "请求参数错误"
+          },
+          "data": {
+            "type": "object",
+            "description": "错误详情（通常为null）",
+            "properties": {},
+            "nullable": true,
+            "example": null
+          }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "description": "商品信息",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "description": "商品ID",
+            "example": "PROD001"
+          },
+          "name": {
+            "type": "string",
+            "description": "商品名称",
+            "example": "iPhone 15 Pro"
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "分类ID",
+            "example": "CAT004"
+          },
+          "categoryName": {
+            "type": "string",
+            "description": "分类名称",
+            "example": "手机"
+          },
+          "price": {
+            "type": "number",
+            "format": "double",
+            "description": "商品价格（单位：元）",
+            "example": 8999
+          },
+          "stock": {
+            "type": "integer",
+            "description": "库存数量",
+            "example": 100
+          },
+          "description": {
+            "type": "string",
+            "description": "商品描述",
+            "example": "Apple iPhone 15 Pro 256GB 原色钛金属"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "商品主图URL",
+            "example": "/images/iphone15.jpg"
+          },
+          "status": {
+            "type": "integer",
+            "description": "商品状态：\n- 1 上架\n- 0 下架\n",
+            "enum": [
+              0,
+              1
+            ],
+            "example": 1
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间",
+            "example": "2026-01-15 10:30:00"
+          }
+        }
+      },
+      "ProductDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Product"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "images": {
+                "type": "array",
+                "description": "商品图片列表",
+                "items": {
+                  "$ref": "#/components/schemas/ProductImage"
+                }
+              },
+              "updateTime": {
+                "type": "string",
+                "format": "date-time",
+                "description": "最后更新时间",
+                "example": "2026-02-20 14:20:00"
+              }
+            }
+          }
+        ]
+      },
+      "ProductImage": {
+        "type": "object",
+        "description": "商品图片信息",
+        "properties": {
+          "imageId": {
+            "type": "string",
+            "description": "图片ID",
+            "example": "IMG001"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "图片URL地址",
+            "example": "/images/iphone15_1.jpg"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "排序号（数字越小越靠前）",
+            "example": 1
+          }
+        }
+      },
+      "ProductPageResult": {
+        "type": "object",
+        "description": "商品列表分页查询结果",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "总记录数",
+            "example": 100
+          },
+          "page": {
+            "type": "integer",
+            "description": "当前页码",
+            "example": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "每页数量",
+            "example": 10
+          },
+          "totalPages": {
+            "type": "integer",
+            "description": "总页数",
+            "example": 10
+          },
+          "list": {
+            "type": "array",
+            "description": "商品列表",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
+          }
+        }
+      },
+      "CartItem": {
+        "type": "object",
+        "description": "购物车中的商品项",
+        "properties": {
+          "cartId": {
+            "type": "string",
+            "description": "购物车项ID",
+            "example": "CART001"
+          },
+          "productId": {
+            "type": "string",
+            "description": "商品ID",
+            "example": "PROD001"
+          },
+          "productName": {
+            "type": "string",
+            "description": "商品名称",
+            "example": "iPhone 15 Pro"
+          },
+          "productImage": {
+            "type": "string",
+            "description": "商品主图URL",
+            "example": "/images/iphone15.jpg"
+          },
+          "price": {
+            "type": "number",
+            "format": "double",
+            "description": "商品单价（单位：元）",
+            "example": 8999
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "购买数量",
+            "minimum": 1,
+            "example": 1
+          },
+          "subtotal": {
+            "type": "number",
+            "format": "double",
+            "description": "小计金额（= price × quantity）",
+            "example": 8999
+          },
+          "stock": {
+            "type": "integer",
+            "description": "当前库存数量（用于前端校验）",
+            "example": 100
+          },
+          "status": {
+            "type": "integer",
+            "description": "商品状态：\n- 1 上架（可购买）\n- 0 下架（不可购买，前端置灰显示）\n",
+            "example": 1
+          }
+        }
+      },
+      "CartResult": {
+        "type": "object",
+        "description": "购物车完整信息",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "购物车商品列表",
+            "items": {
+              "$ref": "#/components/schemas/CartItem"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "商品种类数",
+            "example": 3
+          },
+          "totalQuantity": {
+            "type": "integer",
+            "description": "商品总件数",
+            "example": 6
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double",
+            "description": "购物车总金额（单位：元）",
+            "example": 12981
+          }
+        }
+      },
+      "AddCartRequest": {
+        "type": "object",
+        "description": "添加商品到购物车的请求参数",
+        "required": [
+          "productId",
+          "quantity"
+        ],
+        "properties": {
+          "productId": {
+            "type": "string",
+            "description": "商品ID（必填）",
+            "example": "PROD001"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "添加数量（必填，最少为1）",
+            "minimum": 1,
+            "default": 1,
+            "example": 1
+          }
+        }
+      },
+      "UpdateCartRequest": {
+        "type": "object",
+        "description": "修改购物车商品数量的请求参数",
+        "required": [
+          "quantity"
+        ],
+        "properties": {
+          "quantity": {
+            "type": "integer",
+            "description": "新的数量（必填，最少为1）",
+            "minimum": 1,
+            "example": 3
+          }
+        }
+      }
+    },
+    "responses": {},
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token 认证，格式：`Bearer {token}`\n登录成功后获取 token，购物车相关接口需要携带此 token\n"
+      }
+    }
+  },
+  "servers": [],
+  "security": []
+}
