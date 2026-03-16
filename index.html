@@ -1,0 +1,2511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>优品商城 - 品质生活，优选好物</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF6B35',
+            'primary-dark': '#E55A2B',
+            'primary-light': '#FF8F6B',
+            secondary: '#007AFF',
+            success: '#34C759',
+            warning: '#FF9500',
+            danger: '#FF3B30',
+            info: '#5AC8FA',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #333; background: #f5f5f5; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    .gradient-primary { background: linear-gradient(135deg, #FF6B35 0%, #FF8F6B 100%); }
+    .gradient-blue { background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%); }
+    .gradient-green { background: linear-gradient(135deg, #34C759 0%, #7AE09A 100%); }
+    .gradient-purple { background: linear-gradient(135deg, #AF52DE 0%, #D48EF6 100%); }
+    .card-shadow { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    .card-hover { transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+    .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; }
+    .slide-enter-active, .slide-leave-active { transition: transform 0.3s ease, opacity 0.3s ease; }
+    .slide-enter-from { transform: translateY(20px); opacity: 0; }
+    .slide-leave-to { transform: translateY(-20px); opacity: 0; }
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
+    @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .animate-pulse-slow { animation: pulse 2s ease-in-out infinite; }
+    @keyframes bounce-in { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 70% { transform: scale(0.9); } 100% { transform: scale(1); opacity: 1; } }
+    .bounce-in { animation: bounce-in 0.5s ease; }
+    .toast-enter { animation: toast-in 0.3s ease; }
+    @keyframes toast-in { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #FF6B35 !important; box-shadow: 0 0 0 3px rgba(255,107,53,0.15); }
+    .btn-primary { background: linear-gradient(135deg, #FF6B35, #FF8F6B); color: white; transition: all 0.3s; }
+    .btn-primary:hover { background: linear-gradient(135deg, #E55A2B, #FF6B35); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,107,53,0.4); }
+    .btn-primary:active { transform: scale(0.98); }
+    .price-color { color: #FF3B30; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .product-img-wrap { position: relative; overflow: hidden; }
+    .product-img-wrap img { transition: transform 0.5s ease; }
+    .product-img-wrap:hover img { transform: scale(1.08); }
+    .menu-item { transition: all 0.2s; border-left: 3px solid transparent; }
+    .menu-item:hover, .menu-item.active { background: rgba(255,107,53,0.08); border-left-color: #FF6B35; color: #FF6B35; }
+    [v-cloak] { display: none; }
+  </style>
+</head>
+<body>
+<div id="app" v-cloak>
+  <!-- Toast Notifications -->
+  <div class="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] space-y-2">
+    <div v-for="(t, i) in toasts" :key="i" class="toast-enter flex items-center gap-3 px-5 py-3 rounded-lg shadow-lg text-white min-w-[300px]"
+         :class="{'bg-green-500': t.type==='success','bg-red-500': t.type==='error','bg-orange-500': t.type==='warning','bg-blue-500': t.type==='info'}">
+      <i :class="{'fa-check-circle': t.type==='success','fa-exclamation-circle': t.type==='error','fa-exclamation-triangle': t.type==='warning','fa-info-circle': t.type==='info'}" class="fas text-lg"></i>
+      <span class="flex-1 text-sm">{{ t.message }}</span>
+      <button @click="toasts.splice(i,1)" class="opacity-70 hover:opacity-100"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div v-if="modal.show" class="fixed inset-0 z-[9998] flex items-center justify-center p-4" @click.self="modal.show=false">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6 bounce-in">
+      <button @click="modal.show=false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fas fa-times text-lg"></i></button>
+      <div class="text-center">
+        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+             :class="{'bg-green-100 text-green-500': modal.type==='success','bg-red-100 text-red-500': modal.type==='error','bg-orange-100 text-orange-500': modal.type==='warning','bg-blue-100 text-blue-500': modal.type==='confirm'}">
+          <i :class="{'fa-check': modal.type==='success','fa-times': modal.type==='error','fa-exclamation': modal.type==='warning','fa-question': modal.type==='confirm'}" class="fas text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold mb-2">{{ modal.title }}</h3>
+        <p class="text-gray-500 text-sm mb-6">{{ modal.message }}</p>
+        <div class="flex gap-3 justify-center">
+          <button v-if="modal.type==='confirm'" @click="modal.show=false" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">取消</button>
+          <button @click="modal.onConfirm?.(); modal.show=false" class="px-6 py-2 btn-primary rounded-lg">确定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== FRONTEND PAGES ==================== -->
+  <template v-if="!currentPage.startsWith('admin')">
+    <!-- Top Navigation -->
+    <header class="bg-white sticky top-0 z-50 card-shadow">
+      <div class="max-w-7xl mx-auto px-4">
+        <!-- Top bar -->
+        <div class="hidden md:flex items-center justify-between text-xs text-gray-500 py-1 border-b border-gray-100">
+          <div class="flex gap-4">
+            <span><i class="fas fa-map-marker-alt mr-1"></i>北京</span>
+            <a href="#" class="hover:text-primary">手机版</a>
+          </div>
+          <div class="flex gap-4">
+            <a @click.prevent="navigateTo(isLoggedIn ? 'user' : 'login')" class="hover:text-primary cursor-pointer">
+              {{ isLoggedIn ? currentUser.nickname : '登录' }}
+            </a>
+            <a v-if="!isLoggedIn" @click.prevent="navigateTo('register')" class="hover:text-primary cursor-pointer">注册</a>
+            <a @click.prevent="navigateTo('orders')" class="hover:text-primary cursor-pointer">我的订单</a>
+            <a @click.prevent="navigateTo('user')" class="hover:text-primary cursor-pointer">会员中心</a>
+            <a @click.prevent="navigateTo('message')" class="hover:text-primary cursor-pointer">留言板</a>
+            <a v-if="isAdmin" @click.prevent="navigateTo('admin-dashboard')" class="hover:text-primary cursor-pointer text-primary font-medium">后台管理</a>
+          </div>
+        </div>
+        <!-- Main nav -->
+        <div class="flex items-center gap-4 py-3">
+          <a @click.prevent="navigateTo('home')" class="flex items-center gap-2 cursor-pointer shrink-0">
+            <div class="w-9 h-9 gradient-primary rounded-lg flex items-center justify-center text-white font-bold text-lg">优</div>
+            <span class="text-xl font-bold text-gray-800 hidden sm:block">优品商城</span>
+          </a>
+          <div class="flex-1 max-w-2xl mx-auto relative">
+            <input v-model="searchKeyword" @keyup.enter="doSearch" type="text" placeholder="搜索商品、品牌..."
+                   class="w-full h-10 pl-4 pr-24 border-2 border-primary rounded-full text-sm focus:border-primary">
+            <button @click="doSearch" class="absolute right-1 top-1 h-8 px-5 gradient-primary text-white rounded-full text-sm font-medium hover:opacity-90 transition">
+              <i class="fas fa-search mr-1"></i>搜索
+            </button>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <a @click.prevent="navigateTo('cart')" class="relative cursor-pointer p-2 text-gray-600 hover:text-primary transition">
+              <i class="fas fa-shopping-cart text-xl"></i>
+              <span v-if="cartTotalCount > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{{ cartTotalCount > 99 ? '99+' : cartTotalCount }}</span>
+            </a>
+            <button @click="mobileMenuOpen=!mobileMenuOpen" class="md:hidden p-2 text-gray-600"><i class="fas fa-bars text-xl"></i></button>
+          </div>
+        </div>
+        <!-- Category nav -->
+        <nav class="hidden md:flex items-center gap-6 py-2 border-t border-gray-100 text-sm">
+          <a v-for="cat in categories" :key="cat.id" @click.prevent="filterByCategory(cat.id)" class="text-gray-600 hover:text-primary cursor-pointer transition whitespace-nowrap">
+            <i :class="cat.icon" class="mr-1"></i>{{ cat.name }}
+          </a>
+        </nav>
+      </div>
+      <!-- Mobile menu -->
+      <div v-if="mobileMenuOpen" class="md:hidden bg-white border-t px-4 py-3 space-y-2">
+        <a v-for="cat in categories" :key="cat.id" @click.prevent="filterByCategory(cat.id); mobileMenuOpen=false"
+           class="block py-2 px-3 text-sm text-gray-600 hover:bg-orange-50 hover:text-primary rounded-lg cursor-pointer">
+          <i :class="cat.icon" class="mr-2 w-5 text-center"></i>{{ cat.name }}
+        </a>
+        <div class="border-t pt-2 mt-2 flex gap-2">
+          <a @click.prevent="navigateTo(isLoggedIn?'user':'login'); mobileMenuOpen=false" class="flex-1 text-center py-2 text-sm bg-orange-50 text-primary rounded-lg cursor-pointer">
+            {{ isLoggedIn ? '个人中心' : '登录' }}
+          </a>
+          <a @click.prevent="navigateTo('orders'); mobileMenuOpen=false" class="flex-1 text-center py-2 text-sm bg-orange-50 text-primary rounded-lg cursor-pointer">我的订单</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== HOME PAGE ===== -->
+    <main v-if="currentPage==='home'" class="max-w-7xl mx-auto px-4 py-4">
+      <!-- Banner Carousel -->
+      <div class="relative rounded-xl overflow-hidden mb-6 bg-gray-200" style="height: 380px;">
+        <div v-for="(banner, idx) in banners" :key="idx" v-show="currentBanner===idx" class="absolute inset-0 transition-opacity duration-700"
+             :style="{background: banner.bg}">
+          <div class="h-full flex items-center px-12">
+            <div class="text-white max-w-lg">
+              <h2 class="text-4xl font-bold mb-3">{{ banner.title }}</h2>
+              <p class="text-lg mb-6 opacity-90">{{ banner.subtitle }}</p>
+              <button @click="navigateTo('products')" class="px-8 py-3 bg-white text-primary rounded-full font-semibold hover:shadow-lg transition">
+                立即抢购 <i class="fas fa-arrow-right ml-2"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <button @click="prevBanner" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/30 hover:bg-white/50 rounded-full flex items-center justify-center text-white backdrop-blur transition">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button @click="nextBanner" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/30 hover:bg-white/50 rounded-full flex items-center justify-center text-white backdrop-blur transition">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+          <button v-for="(b, i) in banners" :key="i" @click="currentBanner=i"
+                  class="w-3 h-3 rounded-full transition" :class="currentBanner===i ? 'bg-white scale-110' : 'bg-white/50'"></button>
+        </div>
+      </div>
+
+      <!-- Categories Grid -->
+      <div class="grid grid-cols-3 sm:grid-cols-6 gap-4 mb-8">
+        <a v-for="cat in categories" :key="cat.id" @click.prevent="filterByCategory(cat.id)"
+           class="flex flex-col items-center gap-2 p-4 bg-white rounded-xl card-shadow card-hover cursor-pointer group">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-transform group-hover:scale-110"
+               :style="{background: cat.color + '20', color: cat.color}">
+            <i :class="cat.icon"></i>
+          </div>
+          <span class="text-sm text-gray-700 font-medium">{{ cat.name }}</span>
+        </a>
+      </div>
+
+      <!-- Flash Sale -->
+      <div class="bg-white rounded-xl p-6 mb-8 card-shadow">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl font-bold"><i class="fas fa-bolt text-yellow-500 mr-2"></i>限时秒杀</h2>
+            <div class="flex gap-1 text-sm">
+              <span class="bg-gray-900 text-white px-2 py-1 rounded font-mono">{{ flashCountdown.hours }}</span>
+              <span class="text-gray-900 font-bold">:</span>
+              <span class="bg-gray-900 text-white px-2 py-1 rounded font-mono">{{ flashCountdown.minutes }}</span>
+              <span class="text-gray-900 font-bold">:</span>
+              <span class="bg-gray-900 text-white px-2 py-1 rounded font-mono">{{ flashCountdown.seconds }}</span>
+            </div>
+          </div>
+          <a @click.prevent="navigateTo('products')" class="text-primary text-sm cursor-pointer hover:underline">更多 <i class="fas fa-angle-right"></i></a>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+          <div v-for="p in flashSaleProducts" :key="p.id" @click="viewProduct(p.id)" class="cursor-pointer card-hover bg-gray-50 rounded-lg overflow-hidden">
+            <div class="product-img-wrap aspect-square bg-gray-100">
+              <img :src="p.image" :alt="p.name" class="w-full h-full object-cover" loading="lazy">
+              <span class="absolute top-2 left-2 tag bg-red-500 text-white font-bold">秒杀</span>
+            </div>
+            <div class="p-3">
+              <p class="text-sm line-clamp-1 mb-1">{{ p.name }}</p>
+              <div class="flex items-baseline gap-2">
+                <span class="price-color font-bold text-lg">¥{{ p.price }}</span>
+                <span class="text-gray-400 text-xs line-through">¥{{ p.originalPrice }}</span>
+              </div>
+              <div class="mt-2 bg-red-100 rounded-full h-4 relative overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-red-500 to-orange-400 rounded-full" :style="{width: p.salePercent + '%'}"></div>
+                <span class="absolute inset-0 text-center text-xs text-red-700 font-medium leading-4">已抢{{ p.salePercent }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recommended -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold"><i class="fas fa-thumbs-up text-primary mr-2"></i>为您推荐</h2>
+          <a @click.prevent="navigateTo('products')" class="text-primary text-sm cursor-pointer hover:underline">查看更多 <i class="fas fa-angle-right"></i></a>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div v-for="p in recommendedProducts" :key="p.id" @click="viewProduct(p.id)" class="bg-white rounded-xl overflow-hidden card-shadow card-hover cursor-pointer group">
+            <div class="product-img-wrap aspect-square bg-gray-100 relative">
+              <img :src="p.image" :alt="p.name" class="w-full h-full object-cover" loading="lazy">
+              <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                <button @click.stop="addToCart(p)" class="opacity-0 group-hover:opacity-100 px-4 py-2 bg-white text-primary rounded-full text-sm font-medium shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                  <i class="fas fa-cart-plus mr-1"></i>加入购物车
+                </button>
+              </div>
+              <span v-if="p.tag" class="absolute top-2 left-2 tag text-white font-medium"
+                    :class="p.tag==='新品' ? 'bg-green-500' : p.tag==='热销' ? 'bg-red-500' : 'bg-blue-500'">{{ p.tag }}</span>
+            </div>
+            <div class="p-4">
+              <p class="text-sm line-clamp-2 mb-2 text-gray-800 group-hover:text-primary transition">{{ p.name }}</p>
+              <div class="flex items-baseline gap-2 mb-1">
+                <span class="price-color font-bold text-xl">¥{{ p.price }}</span>
+                <span v-if="p.originalPrice" class="text-gray-400 text-xs line-through">¥{{ p.originalPrice }}</span>
+              </div>
+              <div class="flex items-center justify-between text-xs text-gray-400">
+                <span>月销 {{ p.sales }}+</span>
+                <span><i class="fas fa-star text-yellow-400"></i> {{ p.rating }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hot & New sections -->
+      <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-xl p-6 card-shadow">
+          <h3 class="text-lg font-bold mb-4 flex items-center"><i class="fas fa-fire text-red-500 mr-2"></i>热销爆款</h3>
+          <div class="space-y-3">
+            <div v-for="(p, idx) in hotProducts.slice(0,5)" :key="p.id" @click="viewProduct(p.id)"
+                 class="flex items-center gap-3 p-2 rounded-lg hover:bg-orange-50 cursor-pointer transition">
+              <span class="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-white shrink-0"
+                    :class="idx < 3 ? 'bg-red-500' : 'bg-gray-400'">{{ idx + 1 }}</span>
+              <img :src="p.image" class="w-12 h-12 rounded-lg object-cover shrink-0">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm line-clamp-1">{{ p.name }}</p>
+                <div class="flex items-center gap-2">
+                  <span class="price-color font-bold">¥{{ p.price }}</span>
+                  <span class="text-xs text-gray-400">销量 {{ p.sales }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl p-6 card-shadow">
+          <h3 class="text-lg font-bold mb-4 flex items-center"><i class="fas fa-sparkles text-green-500 mr-2"></i>新品上市</h3>
+          <div class="space-y-3">
+            <div v-for="(p, idx) in newProducts.slice(0,5)" :key="p.id" @click="viewProduct(p.id)"
+                 class="flex items-center gap-3 p-2 rounded-lg hover:bg-green-50 cursor-pointer transition">
+              <span class="w-6 h-6 rounded flex items-center justify-center text-xs font-bold bg-green-500 text-white shrink-0">新</span>
+              <img :src="p.image" class="w-12 h-12 rounded-lg object-cover shrink-0">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm line-clamp-1">{{ p.name }}</p>
+                <div class="flex items-center gap-2">
+                  <span class="price-color font-bold">¥{{ p.price }}</span>
+                  <span class="tag bg-green-100 text-green-600">新品</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ===== PRODUCTS LIST PAGE ===== -->
+    <main v-if="currentPage==='products'" class="max-w-7xl mx-auto px-4 py-4">
+      <!-- Breadcrumb -->
+      <div class="text-sm text-gray-500 mb-4 flex items-center gap-2">
+        <a @click.prevent="navigateTo('home')" class="hover:text-primary cursor-pointer">首页</a>
+        <i class="fas fa-angle-right text-xs"></i>
+        <span class="text-gray-800">{{ selectedCategoryName || '全部商品' }}</span>
+        <span v-if="searchKeyword"> > 搜索"{{ searchKeyword }}"</span>
+      </div>
+      <div class="flex gap-6">
+        <!-- Sidebar Filters -->
+        <aside class="hidden lg:block w-60 shrink-0">
+          <div class="bg-white rounded-xl p-4 card-shadow sticky top-32 space-y-5">
+            <div>
+              <h4 class="font-semibold mb-3 text-sm">商品分类</h4>
+              <div class="space-y-1">
+                <a v-for="cat in [{id:0,name:'全部分类',icon:'fas fa-th'},...categories]" :key="cat.id"
+                   @click.prevent="filterCategory=cat.id; loadProducts()"
+                   class="flex items-center gap-2 py-2 px-3 rounded-lg text-sm cursor-pointer transition"
+                   :class="filterCategory===cat.id ? 'bg-orange-50 text-primary font-medium' : 'text-gray-600 hover:bg-gray-50'">
+                  <i :class="cat.icon" class="w-4 text-center"></i>{{ cat.name }}
+                </a>
+              </div>
+            </div>
+            <div>
+              <h4 class="font-semibold mb-3 text-sm">价格区间</h4>
+              <div class="space-y-2">
+                <a v-for="range in priceRanges" :key="range.label" @click.prevent="filterPriceRange=range; loadProducts()"
+                   class="block py-1.5 px-3 rounded text-sm cursor-pointer transition"
+                   :class="filterPriceRange===range ? 'bg-orange-50 text-primary' : 'text-gray-600 hover:bg-gray-50'">{{ range.label }}</a>
+              </div>
+              <div class="flex items-center gap-2 mt-2">
+                <input v-model.number="filterPriceMin" type="number" placeholder="最低" class="w-full border rounded-lg px-2 py-1.5 text-sm">
+                <span class="text-gray-400">-</span>
+                <input v-model.number="filterPriceMax" type="number" placeholder="最高" class="w-full border rounded-lg px-2 py-1.5 text-sm">
+                <button @click="applyPriceFilter" class="px-3 py-1.5 bg-primary text-white rounded-lg text-sm shrink-0">确定</button>
+              </div>
+            </div>
+            <div>
+              <h4 class="font-semibold mb-3 text-sm">筛选</h4>
+              <label class="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
+                <input type="checkbox" v-model="filterInStock" @change="loadProducts()" class="rounded text-primary"> 仅显示有货
+              </label>
+              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <input type="checkbox" v-model="filterOnSale" @change="loadProducts()" class="rounded text-primary"> 促销商品
+              </label>
+            </div>
+          </div>
+        </aside>
+        <!-- Products Grid -->
+        <div class="flex-1 min-w-0">
+          <!-- Sort bar -->
+          <div class="bg-white rounded-xl p-4 card-shadow mb-4 flex flex-wrap items-center gap-3">
+            <span class="text-sm text-gray-500">排序：</span>
+            <button v-for="s in sortOptions" :key="s.value" @click="currentSort=s.value; loadProducts()"
+                    class="px-4 py-1.5 rounded-full text-sm transition"
+                    :class="currentSort===s.value ? 'gradient-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">{{ s.label }}</button>
+            <span class="ml-auto text-sm text-gray-400">共 {{ filteredProducts.length }} 件商品</span>
+          </div>
+          <!-- Grid -->
+          <div v-if="filteredProducts.length" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div v-for="p in paginatedProducts" :key="p.id" @click="viewProduct(p.id)"
+                 class="bg-white rounded-xl overflow-hidden card-shadow card-hover cursor-pointer group">
+              <div class="product-img-wrap aspect-square bg-gray-100 relative">
+                <img :src="p.image" :alt="p.name" class="w-full h-full object-cover" loading="lazy">
+                <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button @click.stop="addToCart(p)" class="w-full py-2 bg-white text-primary rounded-lg text-sm font-medium hover:bg-orange-50 transition">
+                    <i class="fas fa-cart-plus mr-1"></i>加入购物车
+                  </button>
+                </div>
+                <button @click.stop="toggleFavorite(p.id)" class="absolute top-2 right-2 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                  <i :class="isFavorite(p.id) ? 'fas text-red-500' : 'far text-gray-400'" class="fa-heart"></i>
+                </button>
+              </div>
+              <div class="p-3">
+                <p class="text-sm line-clamp-2 mb-2">{{ p.name }}</p>
+                <div class="flex items-baseline gap-2">
+                  <span class="price-color font-bold text-lg">¥{{ p.price }}</span>
+                  <span v-if="p.originalPrice" class="text-gray-400 text-xs line-through">¥{{ p.originalPrice }}</span>
+                </div>
+                <div class="flex items-center justify-between text-xs text-gray-400 mt-1">
+                  <span>月销{{ p.sales }}+</span>
+                  <span>{{ p.reviews }}条评价</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="bg-white rounded-xl p-16 text-center card-shadow">
+            <i class="fas fa-search text-6xl text-gray-200 mb-4"></i>
+            <p class="text-gray-500 mb-2">没有找到相关商品</p>
+            <p class="text-sm text-gray-400 mb-4">换个关键词试试吧~</p>
+            <button @click="resetFilters" class="px-6 py-2 btn-primary rounded-lg text-sm">重置筛选</button>
+          </div>
+          <!-- Pagination -->
+          <div v-if="filteredProducts.length > pageSize" class="flex items-center justify-center gap-2 mt-6">
+            <button @click="currentPageNum=Math.max(1,currentPageNum-1)" :disabled="currentPageNum===1"
+                    class="px-3 py-2 rounded-lg border text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:border-primary hover:text-primary transition">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <button v-for="p in totalPages" :key="p" @click="currentPageNum=p"
+                    class="w-9 h-9 rounded-lg text-sm transition"
+                    :class="currentPageNum===p ? 'gradient-primary text-white' : 'border hover:border-primary hover:text-primary'">{{ p }}</button>
+            <button @click="currentPageNum=Math.min(totalPages,currentPageNum+1)" :disabled="currentPageNum===totalPages"
+                    class="px-3 py-2 rounded-lg border text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:border-primary hover:text-primary transition">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ===== PRODUCT DETAIL PAGE ===== -->
+    <main v-if="currentPage==='detail'" class="max-w-7xl mx-auto px-4 py-4">
+      <div class="text-sm text-gray-500 mb-4">
+        <a @click.prevent="navigateTo('home')" class="hover:text-primary cursor-pointer">首页</a>
+        <i class="fas fa-angle-right text-xs mx-2"></i>
+        <a @click.prevent="navigateTo('products')" class="hover:text-primary cursor-pointer">商品列表</a>
+        <i class="fas fa-angle-right text-xs mx-2"></i>
+        <span class="text-gray-800">{{ currentProduct?.name }}</span>
+      </div>
+      <div v-if="currentProduct" class="bg-white rounded-xl card-shadow p-6 mb-6">
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Images -->
+          <div>
+            <div class="aspect-square bg-gray-100 rounded-xl overflow-hidden mb-3">
+              <img :src="currentProduct.images?.[currentImageIndex] || currentProduct.image" class="w-full h-full object-cover">
+            </div>
+            <div class="flex gap-2 overflow-x-auto pb-2">
+              <div v-for="(img, i) in (currentProduct.images || [currentProduct.image])" :key="i"
+                   @click="currentImageIndex=i"
+                   class="w-16 h-16 rounded-lg overflow-hidden border-2 cursor-pointer shrink-0 transition"
+                   :class="currentImageIndex===i ? 'border-primary' : 'border-transparent hover:border-gray-300'">
+                <img :src="img" class="w-full h-full object-cover">
+              </div>
+            </div>
+          </div>
+          <!-- Info -->
+          <div>
+            <h1 class="text-xl font-bold mb-2">{{ currentProduct.name }}</h1>
+            <p class="text-gray-500 text-sm mb-4">{{ currentProduct.description }}</p>
+            <div class="bg-orange-50 rounded-xl p-4 mb-4">
+              <div class="flex items-baseline gap-3">
+                <span class="text-sm text-gray-500">价格</span>
+                <span class="price-color font-bold text-3xl">¥{{ currentProduct.price }}</span>
+                <span v-if="currentProduct.originalPrice" class="text-gray-400 line-through">¥{{ currentProduct.originalPrice }}</span>
+                <span v-if="currentProduct.originalPrice" class="tag bg-red-500 text-white">{{ Math.round((1 - currentProduct.price/currentProduct.originalPrice)*100) }}%OFF</span>
+              </div>
+              <div class="flex gap-4 mt-2 text-sm text-gray-500">
+                <span>月销 {{ currentProduct.sales }}+</span>
+                <span>好评率 {{ currentProduct.rating * 20 }}%</span>
+              </div>
+            </div>
+            <!-- Promotions -->
+            <div class="flex items-start gap-3 mb-4 text-sm">
+              <span class="text-gray-500 shrink-0 mt-0.5">促销</span>
+              <div class="flex flex-wrap gap-2">
+                <span class="tag bg-red-50 text-red-500 border border-red-200">满199减20</span>
+                <span class="tag bg-red-50 text-red-500 border border-red-200">满399减50</span>
+                <span class="tag bg-orange-50 text-orange-600 border border-orange-200">新人专享9折</span>
+              </div>
+            </div>
+            <!-- Specs -->
+            <div v-if="currentProduct.specs" class="mb-4">
+              <div v-for="spec in currentProduct.specs" :key="spec.name" class="flex items-start gap-3 mb-3">
+                <span class="text-sm text-gray-500 shrink-0 mt-1">{{ spec.name }}</span>
+                <div class="flex flex-wrap gap-2">
+                  <button v-for="opt in spec.options" :key="opt" @click="selectSpec(spec.name, opt)"
+                          class="px-4 py-1.5 border rounded-lg text-sm transition"
+                          :class="selectedSpecs[spec.name]===opt ? 'border-primary text-primary bg-orange-50' : 'border-gray-300 hover:border-primary'">{{ opt }}</button>
+                </div>
+              </div>
+            </div>
+            <!-- Quantity -->
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-sm text-gray-500">数量</span>
+              <div class="flex items-center border rounded-lg overflow-hidden">
+                <button @click="detailQuantity=Math.max(1,detailQuantity-1)" class="w-9 h-9 flex items-center justify-center hover:bg-gray-100 transition">
+                  <i class="fas fa-minus text-xs"></i>
+                </button>
+                <input v-model.number="detailQuantity" type="number" min="1" class="w-14 h-9 text-center border-x text-sm">
+                <button @click="detailQuantity++" class="w-9 h-9 flex items-center justify-center hover:bg-gray-100 transition">
+                  <i class="fas fa-plus text-xs"></i>
+                </button>
+              </div>
+              <span class="text-sm text-gray-400">库存 {{ currentProduct.stock }} 件</span>
+            </div>
+            <!-- Delivery -->
+            <div class="flex items-center gap-3 mb-4 text-sm text-gray-500">
+              <span>配送</span>
+              <span><i class="fas fa-truck text-primary mr-1"></i>免运费 · 预计3-5天送达</span>
+            </div>
+            <!-- Services -->
+            <div class="flex flex-wrap gap-3 mb-6 text-xs text-gray-500">
+              <span><i class="fas fa-shield-alt text-green-500 mr-1"></i>正品保证</span>
+              <span><i class="fas fa-undo text-blue-500 mr-1"></i>7天无理由</span>
+              <span><i class="fas fa-money-bill-wave text-green-500 mr-1"></i>极速退款</span>
+              <span><i class="fas fa-certificate text-orange-500 mr-1"></i>全国联保</span>
+            </div>
+            <!-- Actions -->
+            <div class="flex gap-3">
+              <button @click="addToCart(currentProduct, detailQuantity)" class="flex-1 py-3 gradient-blue text-white rounded-xl font-semibold hover:opacity-90 transition text-lg">
+                <i class="fas fa-cart-plus mr-2"></i>加入购物车
+              </button>
+              <button @click="buyNow" class="flex-1 py-3 btn-primary rounded-xl font-semibold text-lg">
+                <i class="fas fa-bolt mr-2"></i>立即购买
+              </button>
+              <button @click="toggleFavorite(currentProduct.id)" class="w-12 h-12 border rounded-xl flex items-center justify-center hover:border-red-300 transition shrink-0">
+                <i :class="isFavorite(currentProduct.id) ? 'fas text-red-500' : 'far text-gray-400'" class="fa-heart text-xl"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Detail Tabs -->
+      <div v-if="currentProduct" class="bg-white rounded-xl card-shadow overflow-hidden mb-6">
+        <div class="flex border-b">
+          <button v-for="tab in ['商品详情','规格参数','用户评价','售后保障']" :key="tab" @click="detailTab=tab"
+                  class="px-6 py-4 text-sm font-medium transition relative"
+                  :class="detailTab===tab ? 'text-primary' : 'text-gray-500 hover:text-gray-800'">
+            {{ tab }}
+            <span v-if="detailTab===tab" class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></span>
+          </button>
+        </div>
+        <div class="p-6">
+          <div v-if="detailTab==='商品详情'" class="prose max-w-none">
+            <p class="text-gray-600 mb-4">{{ currentProduct.description }}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <img v-for="img in (currentProduct.images || [currentProduct.image])" :key="img" :src="img" class="rounded-lg w-full">
+            </div>
+          </div>
+          <div v-if="detailTab==='规格参数'">
+            <table class="w-full text-sm">
+              <tr v-for="(v,k) in (currentProduct.params || {品牌:'优品自营',产地:'中国',材质:'优质材料',保修:'一年'})" :key="k" class="border-b">
+                <td class="py-3 px-4 bg-gray-50 text-gray-500 w-32">{{ k }}</td>
+                <td class="py-3 px-4">{{ v }}</td>
+              </tr>
+            </table>
+          </div>
+          <div v-if="detailTab==='用户评价'">
+            <div class="flex items-center gap-6 mb-6 p-4 bg-orange-50 rounded-xl">
+              <div class="text-center">
+                <div class="text-3xl font-bold text-primary">98%</div>
+                <div class="text-xs text-gray-500">好评率</div>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button v-for="tag in ['全部','好评(128)','中评(3)','差评(1)','有图(45)']" :key="tag"
+                        class="px-3 py-1 rounded-full text-sm border hover:border-primary hover:text-primary transition">{{ tag }}</button>
+              </div>
+            </div>
+            <div v-for="review in mockReviews" :key="review.id" class="border-b last:border-0 py-4">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm">{{ review.user[0] }}</div>
+                <span class="text-sm font-medium">{{ review.user }}</span>
+                <div class="text-yellow-400 text-xs"><i v-for="s in 5" :key="s" :class="s <= review.stars ? 'fas' : 'far'" class="fa-star"></i></div>
+                <span class="text-xs text-gray-400 ml-auto">{{ review.date }}</span>
+              </div>
+              <p class="text-sm text-gray-600 mb-2">{{ review.content }}</p>
+              <div class="flex gap-2">
+                <img v-for="(img,i) in review.images" :key="i" :src="img" class="w-16 h-16 rounded-lg object-cover">
+              </div>
+            </div>
+          </div>
+          <div v-if="detailTab==='售后保障'" class="space-y-4 text-sm text-gray-600">
+            <div class="flex gap-3"><i class="fas fa-shield-alt text-green-500 text-lg mt-0.5"></i><div><strong>正品保证</strong><p class="text-gray-400">所有商品均为品牌正品</p></div></div>
+            <div class="flex gap-3"><i class="fas fa-undo text-blue-500 text-lg mt-0.5"></i><div><strong>7天无理由退换</strong><p class="text-gray-400">签收后7天内可申请退换货</p></div></div>
+            <div class="flex gap-3"><i class="fas fa-money-bill-wave text-green-500 text-lg mt-0.5"></i><div><strong>极速退款</strong><p class="text-gray-400">退款申请通过后24小时内到账</p></div></div>
+          </div>
+        </div>
+      </div>
+      <!-- Recommended -->
+      <div class="mb-6">
+        <h3 class="text-lg font-bold mb-4"><i class="fas fa-eye text-primary mr-2"></i>看了又看</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div v-for="p in allProducts.slice(0,6)" :key="p.id" @click="viewProduct(p.id)" class="bg-white rounded-lg p-3 card-shadow card-hover cursor-pointer">
+            <img :src="p.image" class="w-full aspect-square object-cover rounded-lg mb-2">
+            <p class="text-xs line-clamp-2 mb-1">{{ p.name }}</p>
+            <span class="price-color font-bold text-sm">¥{{ p.price }}</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ===== CART PAGE ===== -->
+    <main v-if="currentPage==='cart'" class="max-w-7xl mx-auto px-4 py-4">
+      <h1 class="text-2xl font-bold mb-6"><i class="fas fa-shopping-cart text-primary mr-2"></i>我的购物车 <span class="text-sm font-normal text-gray-500">({{ cartItems.length }}件商品)</span></h1>
+      <div v-if="cartItems.length">
+        <div class="bg-white rounded-xl card-shadow overflow-hidden mb-4">
+          <!-- Header -->
+          <div class="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-sm text-gray-500 font-medium">
+            <div class="col-span-1"><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="cartSelectAll" @change="toggleSelectAll" class="rounded"> 全选</label></div>
+            <div class="col-span-4">商品信息</div>
+            <div class="col-span-2 text-center">单价</div>
+            <div class="col-span-2 text-center">数量</div>
+            <div class="col-span-2 text-center">小计</div>
+            <div class="col-span-1 text-center">操作</div>
+          </div>
+          <!-- Items -->
+          <div v-for="item in cartItems" :key="item.id" class="grid grid-cols-12 gap-4 px-6 py-4 border-b last:border-0 items-center hover:bg-orange-50/30 transition">
+            <div class="col-span-1">
+              <input type="checkbox" v-model="item.selected" class="rounded">
+            </div>
+            <div class="col-span-11 md:col-span-4">
+              <div class="flex gap-3">
+                <img :src="item.image" @click="viewProduct(item.productId)" class="w-20 h-20 rounded-lg object-cover cursor-pointer shrink-0">
+                <div>
+                  <p @click="viewProduct(item.productId)" class="text-sm line-clamp-2 cursor-pointer hover:text-primary transition">{{ item.name }}</p>
+                  <p class="text-xs text-gray-400 mt-1">{{ item.spec || '' }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="hidden md:block col-span-2 text-center">
+              <span class="price-color font-medium">¥{{ item.price }}</span>
+            </div>
+            <div class="hidden md:flex col-span-2 justify-center">
+              <div class="flex items-center border rounded-lg overflow-hidden">
+                <button @click="updateCartQuantity(item.id, item.quantity-1)" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100"><i class="fas fa-minus text-xs"></i></button>
+                <input v-model.number="item.quantity" @change="updateCartQuantity(item.id, item.quantity)" type="number" min="1" class="w-12 h-8 text-center border-x text-sm">
+                <button @click="updateCartQuantity(item.id, item.quantity+1)" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100"><i class="fas fa-plus text-xs"></i></button>
+              </div>
+            </div>
+            <div class="hidden md:block col-span-2 text-center">
+              <span class="price-color font-bold text-lg">¥{{ (item.price * item.quantity).toFixed(2) }}</span>
+            </div>
+            <div class="hidden md:block col-span-1 text-center">
+              <button @click="removeFromCart(item.id)" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-trash-alt"></i></button>
+            </div>
+            <!-- Mobile layout -->
+            <div class="col-span-11 md:hidden flex items-center justify-between">
+              <div class="flex items-center border rounded-lg overflow-hidden">
+                <button @click="updateCartQuantity(item.id, item.quantity-1)" class="w-7 h-7 flex items-center justify-center"><i class="fas fa-minus text-xs"></i></button>
+                <span class="w-10 text-center text-sm">{{ item.quantity }}</span>
+                <button @click="updateCartQuantity(item.id, item.quantity+1)" class="w-7 h-7 flex items-center justify-center"><i class="fas fa-plus text-xs"></i></button>
+              </div>
+              <span class="price-color font-bold">¥{{ (item.price * item.quantity).toFixed(2) }}</span>
+              <button @click="removeFromCart(item.id)" class="text-gray-400 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
+            </div>
+          </div>
+        </div>
+        <!-- Promotion bar -->
+        <div v-if="cartSelectedAmount < 199" class="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-4 flex items-center gap-3">
+          <i class="fas fa-gift text-orange-500 text-lg"></i>
+          <span class="text-sm text-orange-700">再买 <strong>¥{{ (199 - cartSelectedAmount).toFixed(2) }}</strong> 可享满199减20优惠</span>
+          <div class="flex-1 bg-orange-200 rounded-full h-2 mx-4">
+            <div class="bg-orange-500 rounded-full h-2 transition-all" :style="{width: Math.min(100, cartSelectedAmount/199*100) + '%'}"></div>
+          </div>
+          <a @click.prevent="navigateTo('products')" class="text-primary text-sm cursor-pointer hover:underline shrink-0">去凑单</a>
+        </div>
+        <!-- Settlement bar -->
+        <div class="bg-white rounded-xl card-shadow p-4 sticky bottom-0 flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" v-model="cartSelectAll" @change="toggleSelectAll" class="rounded"> 全选</label>
+            <button @click="removeSelectedFromCart" class="text-sm text-gray-500 hover:text-red-500 transition">删除选中</button>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-right">
+              <span class="text-sm text-gray-500">已选 {{ cartSelectedCount }} 件，合计：</span>
+              <span class="price-color font-bold text-2xl ml-1">¥{{ cartSelectedAmount.toFixed(2) }}</span>
+            </div>
+            <button @click="goCheckout" class="px-8 py-3 btn-primary rounded-xl font-semibold text-lg" :disabled="cartSelectedCount===0">
+              去结算
+            </button>
+          </div>
+        </div>
+      </div>
+      <div v-else class="bg-white rounded-xl p-16 text-center card-shadow">
+        <i class="fas fa-shopping-cart text-7xl text-gray-200 mb-6"></i>
+        <p class="text-gray-500 text-lg mb-2">购物车空空如也~</p>
+        <p class="text-gray-400 text-sm mb-6">快去挑选心仪的商品吧</p>
+        <button @click="navigateTo('home')" class="px-8 py-3 btn-primary rounded-xl font-semibold">去逛逛</button>
+      </div>
+    </main>
+
+    <!-- ===== LOGIN PAGE ===== -->
+    <main v-if="currentPage==='login'" class="min-h-[80vh] flex items-center justify-center px-4 py-8">
+      <div class="w-full max-w-md">
+        <div class="bg-white rounded-2xl card-shadow p-8">
+          <div class="text-center mb-8">
+            <div class="w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">优</div>
+            <h2 class="text-2xl font-bold">欢迎回来</h2>
+            <p class="text-gray-500 text-sm mt-1">登录您的账号</p>
+          </div>
+          <form @submit.prevent="handleLogin" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+              <div class="relative">
+                <i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input v-model="loginForm.username" type="text" required placeholder="请输入用户名"
+                       class="w-full pl-10 pr-4 py-3 border rounded-xl text-sm">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+              <div class="relative">
+                <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input v-model="loginForm.password" :type="showPassword ? 'text' : 'password'" required placeholder="请输入密码"
+                       class="w-full pl-10 pr-10 py-3 border rounded-xl text-sm">
+                <button type="button" @click="showPassword=!showPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <i :class="showPassword ? 'fa-eye-slash' : 'fa-eye'" class="fas"></i>
+                </button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between text-sm">
+              <label class="flex items-center gap-2 cursor-pointer text-gray-600"><input type="checkbox" v-model="loginForm.remember" class="rounded"> 记住我</label>
+              <a class="text-primary hover:underline cursor-pointer">忘记密码？</a>
+            </div>
+            <button type="submit" :disabled="loginLoading" class="w-full py-3 btn-primary rounded-xl font-semibold text-lg disabled:opacity-50">
+              <i v-if="loginLoading" class="fas fa-spinner fa-spin mr-2"></i>
+              {{ loginLoading ? '登录中...' : '登 录' }}
+            </button>
+          </form>
+          <div class="mt-6 text-center text-sm text-gray-500">
+            还没有账号？<a @click.prevent="navigateTo('register')" class="text-primary font-medium cursor-pointer hover:underline">立即注册</a>
+          </div>
+          <div class="mt-6">
+            <div class="flex items-center gap-4 mb-4"><div class="flex-1 h-px bg-gray-200"></div><span class="text-xs text-gray-400">其他登录方式</span><div class="flex-1 h-px bg-gray-200"></div></div>
+            <div class="flex justify-center gap-6">
+              <button class="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center hover:opacity-80 transition"><i class="fab fa-weixin"></i></button>
+              <button class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center hover:opacity-80 transition"><i class="fab fa-qq"></i></button>
+              <button class="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:opacity-80 transition"><i class="fab fa-weibo"></i></button>
+            </div>
+          </div>
+          <div class="mt-4 text-xs text-gray-400 text-center">
+            提示：用户名 admin / 密码 123456 可登录管理后台
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ===== REGISTER PAGE ===== -->
+    <main v-if="currentPage==='register'" class="min-h-[80vh] flex items-center justify-center px-4 py-8">
+      <div class="w-full max-w-md">
+        <div class="bg-white rounded-2xl card-shadow p-8">
+          <div class="text-center mb-8">
+            <div class="w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">优</div>
+            <h2 class="text-2xl font-bold">创建账号</h2>
+            <p class="text-gray-500 text-sm mt-1">加入优品商城</p>
+          </div>
+          <form @submit.prevent="handleRegister" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+              <input v-model="registerForm.username" type="text" required placeholder="请输入用户名" class="w-full px-4 py-3 border rounded-xl text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">昵称</label>
+              <input v-model="registerForm.nickname" type="text" required placeholder="请输入昵称" class="w-full px-4 py-3 border rounded-xl text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+              <input v-model="registerForm.email" type="email" required placeholder="请输入邮箱" class="w-full px-4 py-3 border rounded-xl text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+              <input v-model="registerForm.password" type="password" required placeholder="请设置密码（至少6位）" class="w-full px-4 py-3 border rounded-xl text-sm">
+              <div class="mt-1 flex gap-1">
+                <div class="h-1 flex-1 rounded" :class="passwordStrength >= 1 ? 'bg-red-400' : 'bg-gray-200'"></div>
+                <div class="h-1 flex-1 rounded" :class="passwordStrength >= 2 ? 'bg-yellow-400' : 'bg-gray-200'"></div>
+                <div class="h-1 flex-1 rounded" :class="passwordStrength >= 3 ? 'bg-green-400' : 'bg-gray-200'"></div>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">确认密码</label>
+              <input v-model="registerForm.confirmPassword" type="password" required placeholder="请再次输入密码" class="w-full px-4 py-3 border rounded-xl text-sm">
+            </div>
+            <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input type="checkbox" v-model="registerForm.agree" class="rounded"> 同意 <a class="text-primary">《用户协议》</a>和<a class="text-primary">《隐私政策》</a>
+            </label>
+            <button type="submit" :disabled="!registerForm.agree" class="w-full py-3 btn-primary rounded-xl font-semibold text-lg disabled:opacity-50">立即注册</button>
+          </form>
+          <div class="mt-6 text-center text-sm text-gray-500">
+            已有账号？<a @click.prevent="navigateTo('login')" class="text-primary font-medium cursor-pointer hover:underline">去登录</a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ===== USER CENTER PAGE ===== -->
+    <main v-if="currentPage==='user'" class="max-w-7xl mx-auto px-4 py-6">
+      <div class="flex gap-6">
+        <!-- Sidebar -->
+        <aside class="hidden md:block w-56 shrink-0">
+          <div class="bg-white rounded-xl card-shadow overflow-hidden sticky top-32">
+            <div class="gradient-primary p-6 text-white text-center">
+              <div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold mx-auto mb-2">
+                {{ currentUser?.nickname?.[0] || 'U' }}
+              </div>
+              <p class="font-semibold">{{ currentUser?.nickname || '用户' }}</p>
+              <p class="text-xs opacity-80 mt-1"><i class="fas fa-crown mr-1"></i>VIP会员</p>
+            </div>
+            <nav class="py-2">
+              <a v-for="item in userMenuItems" :key="item.key" @click.prevent="userTab=item.key"
+                 class="menu-item flex items-center gap-3 px-4 py-3 text-sm cursor-pointer" :class="{'active': userTab===item.key}">
+                <i :class="item.icon" class="w-5 text-center"></i>{{ item.label }}
+                <span v-if="item.badge" class="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">{{ item.badge }}</span>
+              </a>
+            </nav>
+            <div class="p-4 border-t">
+              <button @click="handleLogout" class="w-full py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-red-50 hover:border-red-300 hover:text-red-500 transition">
+                <i class="fas fa-sign-out-alt mr-2"></i>退出登录
+              </button>
+            </div>
+          </div>
+        </aside>
+        <!-- Main Content -->
+        <div class="flex-1 min-w-0">
+          <!-- Mobile tabs -->
+          <div class="md:hidden flex overflow-x-auto gap-2 pb-4 no-scrollbar">
+            <button v-for="item in userMenuItems" :key="item.key" @click="userTab=item.key"
+                    class="px-4 py-2 rounded-full text-sm whitespace-nowrap transition"
+                    :class="userTab===item.key ? 'gradient-primary text-white' : 'bg-white text-gray-600'">{{ item.label }}</button>
+          </div>
+
+          <!-- Overview -->
+          <div v-if="userTab==='overview'">
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div v-for="stat in userStats" :key="stat.label" @click="stat.action?.()" class="bg-white rounded-xl p-4 card-shadow text-center cursor-pointer card-hover">
+                <div class="text-2xl font-bold" :style="{color: stat.color}">{{ stat.value }}</div>
+                <div class="text-xs text-gray-500 mt-1">{{ stat.label }}</div>
+              </div>
+            </div>
+            <!-- Quick Actions -->
+            <div class="grid grid-cols-3 sm:grid-cols-5 gap-4 mb-6">
+              <a v-for="action in quickActions" :key="action.label" @click.prevent="action.handler?.()"
+                 class="flex flex-col items-center gap-2 p-4 bg-white rounded-xl card-shadow card-hover cursor-pointer">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl" :style="{background: action.color+'15', color: action.color}">
+                  <i :class="action.icon"></i>
+                </div>
+                <span class="text-xs text-gray-600">{{ action.label }}</span>
+                <span v-if="action.badge" class="text-xs text-red-500">({{ action.badge }})</span>
+              </a>
+            </div>
+            <!-- Recent Orders -->
+            <div class="bg-white rounded-xl card-shadow p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold">最近订单</h3>
+                <a @click.prevent="navigateTo('orders')" class="text-primary text-sm cursor-pointer hover:underline">查看全部</a>
+              </div>
+              <div v-for="order in myOrders.slice(0,3)" :key="order.id" class="border rounded-lg p-4 mb-3 last:mb-0 hover:border-primary/30 transition">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm text-gray-500">订单号：{{ order.orderNo }}</span>
+                  <span class="tag" :class="orderStatusClass(order.status)">{{ order.statusText }}</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <img v-for="item in order.items.slice(0,3)" :key="item.id" :src="item.image" class="w-12 h-12 rounded-lg object-cover">
+                  <span v-if="order.items.length > 3" class="text-sm text-gray-400">+{{ order.items.length - 3 }}</span>
+                  <span class="ml-auto price-color font-bold">¥{{ order.totalAmount.toFixed(2) }}</span>
+                </div>
+              </div>
+              <div v-if="!myOrders.length" class="text-center py-8 text-gray-400">
+                <i class="fas fa-inbox text-4xl mb-2"></i>
+                <p class="text-sm">暂无订单</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Edit -->
+          <div v-if="userTab==='profile'" class="bg-white rounded-xl card-shadow p-6">
+            <h3 class="font-semibold mb-6">个人信息</h3>
+            <form @submit.prevent="saveProfile" class="max-w-lg space-y-4">
+              <div class="flex items-center gap-4 mb-6">
+                <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
+                  {{ profileForm.nickname?.[0] || 'U' }}
+                </div>
+                <button type="button" class="px-4 py-2 border rounded-lg text-sm hover:border-primary hover:text-primary transition">更换头像</button>
+              </div>
+              <div><label class="block text-sm font-medium mb-1">昵称</label><input v-model="profileForm.nickname" class="w-full px-4 py-2.5 border rounded-xl text-sm"></div>
+              <div><label class="block text-sm font-medium mb-1">性别</label>
+                <div class="flex gap-4"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" v-model="profileForm.gender" value="male"> 男</label>
+                  <label class="flex items-center gap-2 cursor-pointer"><input type="radio" v-model="profileForm.gender" value="female"> 女</label></div>
+              </div>
+              <div><label class="block text-sm font-medium mb-1">生日</label><input v-model="profileForm.birthday" type="date" class="w-full px-4 py-2.5 border rounded-xl text-sm"></div>
+              <div><label class="block text-sm font-medium mb-1">邮箱</label><input v-model="profileForm.email" type="email" class="w-full px-4 py-2.5 border rounded-xl text-sm"></div>
+              <div><label class="block text-sm font-medium mb-1">个人简介</label><textarea v-model="profileForm.bio" rows="3" class="w-full px-4 py-2.5 border rounded-xl text-sm" placeholder="介绍一下自己..."></textarea></div>
+              <button type="submit" class="px-8 py-2.5 btn-primary rounded-xl font-medium">保存修改</button>
+            </form>
+          </div>
+
+          <!-- Favorites -->
+          <div v-if="userTab==='favorites'" class="bg-white rounded-xl card-shadow p-6">
+            <h3 class="font-semibold mb-4">我的收藏 ({{ favorites.length }})</h3>
+            <div v-if="favorites.length" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div v-for="id in favorites" :key="id" class="border rounded-xl overflow-hidden card-hover cursor-pointer group">
+                <div v-if="getProductById(id)">
+                  <img :src="getProductById(id).image" @click="viewProduct(id)" class="w-full aspect-square object-cover">
+                  <div class="p-3">
+                    <p class="text-sm line-clamp-2 mb-1">{{ getProductById(id).name }}</p>
+                    <div class="flex items-center justify-between">
+                      <span class="price-color font-bold">¥{{ getProductById(id).price }}</span>
+                      <button @click="toggleFavorite(id)" class="text-red-400 hover:text-red-600"><i class="fas fa-heart-broken text-sm"></i></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-12 text-gray-400">
+              <i class="far fa-heart text-5xl mb-3"></i>
+              <p class="text-sm">还没有收藏商品</p>
+            </div>
+          </div>
+
+          <!-- Addresses -->
+          <div v-if="userTab==='address'" class="bg-white rounded-xl card-shadow p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">收货地址</h3>
+              <button @click="showAddressForm=true" class="px-4 py-2 btn-primary rounded-lg text-sm"><i class="fas fa-plus mr-1"></i>新增地址</button>
+            </div>
+            <div class="space-y-3">
+              <div v-for="addr in addresses" :key="addr.id" class="border rounded-xl p-4 hover:border-primary/30 transition relative">
+                <span v-if="addr.isDefault" class="tag bg-primary text-white absolute top-4 right-4">默认</span>
+                <p class="font-medium">{{ addr.name }} <span class="text-gray-500 font-normal ml-2">{{ addr.phone }}</span></p>
+                <p class="text-sm text-gray-500 mt-1">{{ addr.province }}{{ addr.city }}{{ addr.district }}{{ addr.detail }}</p>
+                <div class="flex gap-4 mt-3 text-sm">
+                  <button @click="editAddress(addr)" class="text-primary hover:underline">编辑</button>
+                  <button v-if="!addr.isDefault" @click="setDefaultAddress(addr.id)" class="text-gray-500 hover:text-primary">设为默认</button>
+                  <button @click="deleteAddress(addr.id)" class="text-gray-500 hover:text-red-500">删除</button>
+                </div>
+              </div>
+            </div>
+            <!-- Address Form Modal -->
+            <div v-if="showAddressForm" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showAddressForm=false">
+              <div class="fixed inset-0 bg-black/50"></div>
+              <div class="relative bg-white rounded-xl p-6 w-full max-w-md">
+                <h4 class="font-semibold mb-4">{{ editingAddress ? '编辑地址' : '新增地址' }}</h4>
+                <form @submit.prevent="saveAddress" class="space-y-3">
+                  <input v-model="addressForm.name" placeholder="收件人姓名" required class="w-full px-4 py-2.5 border rounded-xl text-sm">
+                  <input v-model="addressForm.phone" placeholder="手机号码" required class="w-full px-4 py-2.5 border rounded-xl text-sm">
+                  <div class="grid grid-cols-3 gap-2">
+                    <select v-model="addressForm.province" class="border rounded-xl px-3 py-2.5 text-sm"><option value="">省份</option><option>北京市</option><option>上海市</option><option>广东省</option><option>浙江省</option></select>
+                    <select v-model="addressForm.city" class="border rounded-xl px-3 py-2.5 text-sm"><option value="">城市</option><option>市辖区</option><option>广州市</option><option>杭州市</option></select>
+                    <select v-model="addressForm.district" class="border rounded-xl px-3 py-2.5 text-sm"><option value="">区县</option><option>朝阳区</option><option>天河区</option><option>西湖区</option></select>
+                  </div>
+                  <textarea v-model="addressForm.detail" placeholder="详细地址" required rows="2" class="w-full px-4 py-2.5 border rounded-xl text-sm"></textarea>
+                  <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="addressForm.isDefault" class="rounded"> 设为默认地址</label>
+                  <div class="flex gap-3 pt-2">
+                    <button type="button" @click="showAddressForm=false" class="flex-1 py-2.5 border rounded-xl text-sm hover:bg-gray-50">取消</button>
+                    <button type="submit" class="flex-1 py-2.5 btn-primary rounded-xl text-sm">保存</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security -->
+          <div v-if="userTab==='security'" class="bg-white rounded-xl card-shadow p-6">
+            <h3 class="font-semibold mb-6">账户安全</h3>
+            <div class="space-y-4 max-w-lg">
+              <div class="flex items-center justify-between p-4 border rounded-xl">
+                <div class="flex items-center gap-3"><i class="fas fa-lock text-primary text-lg"></i><div><p class="font-medium text-sm">登录密码</p><p class="text-xs text-gray-400">定期修改密码可提升安全性</p></div></div>
+                <button @click="showPasswordModal=true" class="px-4 py-1.5 border rounded-lg text-sm hover:border-primary hover:text-primary transition">修改</button>
+              </div>
+              <div class="flex items-center justify-between p-4 border rounded-xl">
+                <div class="flex items-center gap-3"><i class="fas fa-mobile-alt text-green-500 text-lg"></i><div><p class="font-medium text-sm">绑定手机</p><p class="text-xs text-gray-400">已绑定 138****8888</p></div></div>
+                <button class="px-4 py-1.5 border rounded-lg text-sm hover:border-primary hover:text-primary transition">更换</button>
+              </div>
+              <div class="flex items-center justify-between p-4 border rounded-xl">
+                <div class="flex items-center gap-3"><i class="fas fa-envelope text-blue-500 text-lg"></i><div><p class="font-medium text-sm">绑定邮箱</p><p class="text-xs text-gray-400">{{ currentUser?.email || '未绑定' }}</p></div></div>
+                <button class="px-4 py-1.5 border rounded-lg text-sm hover:border-primary hover:text-primary transition">{{ currentUser?.email ? '更换' : '绑定' }}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ===== ORDERS PAGE ===== -->
+    <main v-if="currentPage==='orders'" class="max-w-7xl mx-auto px-4 py-6">
+      <h1 class="text-2xl font-bold mb-6"><i class="fas fa-clipboard-list text-primary mr-2"></i>我的订单</h1>
+      <!-- Tabs -->
+      <div class="flex overflow-x-auto gap-1 bg-white rounded-xl card-shadow p-1 mb-6">
+        <button v-for="tab in orderTabs" :key="tab.key" @click="orderTabKey=tab.key"
+                class="px-5 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition"
+                :class="orderTabKey===tab.key ? 'gradient-primary text-white' : 'text-gray-600 hover:bg-gray-100'">
+          {{ tab.label }}
+          <span v-if="tab.count" class="ml-1 text-xs bg-white/30 rounded-full px-1.5">{{ tab.count }}</span>
+        </button>
+      </div>
+      <!-- Search -->
+      <div class="bg-white rounded-xl card-shadow p-4 mb-4 flex gap-3">
+        <input v-model="orderSearch" placeholder="搜索订单号/商品名称" class="flex-1 px-4 py-2 border rounded-xl text-sm">
+        <button class="px-6 py-2 gradient-primary text-white rounded-xl text-sm">搜索</button>
+      </div>
+      <!-- Order List -->
+      <div class="space-y-4">
+        <div v-for="order in filteredOrders" :key="order.id" class="bg-white rounded-xl card-shadow overflow-hidden">
+          <div class="flex items-center justify-between px-6 py-3 bg-gray-50 border-b text-sm">
+            <div class="flex items-center gap-4 text-gray-500">
+              <span>{{ order.createdAt }}</span>
+              <span>订单号：<span class="text-gray-700">{{ order.orderNo }}</span></span>
+            </div>
+            <span class="tag" :class="orderStatusClass(order.status)">{{ order.statusText }}</span>
+          </div>
+          <div class="px-6 py-4">
+            <div v-for="item in order.items" :key="item.id" class="flex items-center gap-4 py-2">
+              <img :src="item.image" @click="viewProduct(item.productId)" class="w-16 h-16 rounded-lg object-cover cursor-pointer">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm line-clamp-1">{{ item.name }}</p>
+                <p class="text-xs text-gray-400">{{ item.spec }}</p>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="text-sm">¥{{ item.price }}</p>
+                <p class="text-xs text-gray-400">x{{ item.quantity }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="px-6 py-3 border-t flex items-center justify-between">
+            <span class="text-sm text-gray-500">共{{ order.items.reduce((s,i) => s+i.quantity, 0) }}件商品</span>
+            <div class="flex items-center gap-4">
+              <span class="text-sm">实付：<span class="price-color font-bold text-lg">¥{{ order.totalAmount.toFixed(2) }}</span></span>
+              <div class="flex gap-2">
+                <button v-if="order.status==='pending'" @click="payOrder(order)" class="px-4 py-1.5 btn-primary rounded-lg text-sm">去支付</button>
+                <button v-if="order.status==='shipped'" @click="confirmReceive(order)" class="px-4 py-1.5 btn-primary rounded-lg text-sm">确认收货</button>
+                <button v-if="order.status==='completed'" @click="reorderFromOrder(order)" class="px-4 py-1.5 border border-primary text-primary rounded-lg text-sm hover:bg-orange-50 transition">再次购买</button>
+                <button @click="viewOrderDetail(order)" class="px-4 py-1.5 border rounded-lg text-sm hover:border-primary hover:text-primary transition">详情</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="!filteredOrders.length" class="bg-white rounded-xl p-16 text-center card-shadow">
+          <i class="fas fa-inbox text-6xl text-gray-200 mb-4"></i>
+          <p class="text-gray-500">暂无{{ orderTabs.find(t=>t.key===orderTabKey)?.label || '' }}订单</p>
+          <button @click="navigateTo('home')" class="mt-4 px-6 py-2 btn-primary rounded-lg text-sm">去购物</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- ===== MESSAGE BOARD PAGE ===== -->
+    <main v-if="currentPage==='message'" class="max-w-4xl mx-auto px-4 py-6">
+      <h1 class="text-2xl font-bold mb-6"><i class="fas fa-comments text-primary mr-2"></i>留言板</h1>
+      <!-- Post Message -->
+      <div class="bg-white rounded-xl card-shadow p-6 mb-6">
+        <h3 class="font-semibold mb-3">发表留言</h3>
+        <textarea v-model="newMessage" rows="3" :maxlength="500" placeholder="说点什么吧..." class="w-full px-4 py-3 border rounded-xl text-sm resize-none"></textarea>
+        <div class="flex items-center justify-between mt-3">
+          <span class="text-xs text-gray-400">{{ newMessage.length }}/500</span>
+          <button @click="postMessage" :disabled="!newMessage.trim()" class="px-6 py-2 btn-primary rounded-lg text-sm disabled:opacity-50">
+            <i class="fas fa-paper-plane mr-1"></i>发表
+          </button>
+        </div>
+      </div>
+      <!-- Messages List -->
+      <div class="space-y-4">
+        <div v-for="msg in messages" :key="msg.id" class="bg-white rounded-xl card-shadow p-6">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0"
+                 :style="{background: stringToColor(msg.user)}">{{ msg.user[0] }}</div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-medium text-sm">{{ msg.user }}</span>
+                <span v-if="msg.isAdmin" class="tag bg-blue-500 text-white">管理员</span>
+                <span class="text-xs text-gray-400 ml-auto">{{ msg.time }}</span>
+              </div>
+              <p class="text-sm text-gray-700 mb-3">{{ msg.content }}</p>
+              <!-- Replies -->
+              <div v-if="msg.replies?.length" class="bg-gray-50 rounded-lg p-3 mb-3 space-y-3">
+                <div v-for="reply in msg.replies" :key="reply.id" class="flex items-start gap-2">
+                  <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs shrink-0">管</div>
+                  <div>
+                    <span class="text-xs text-blue-600 font-medium">官方回复</span>
+                    <p class="text-sm text-gray-600">{{ reply.content }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-4 text-xs text-gray-400">
+                <button @click="toggleLikeMessage(msg)" class="flex items-center gap-1 hover:text-red-500 transition" :class="msg.liked ? 'text-red-500' : ''">
+                  <i :class="msg.liked ? 'fas' : 'far'" class="fa-heart"></i> {{ msg.likes }}
+                </button>
+                <button @click="msg.showReply=!msg.showReply" class="flex items-center gap-1 hover:text-primary transition">
+                  <i class="far fa-comment"></i> 回复
+                </button>
+              </div>
+              <div v-if="msg.showReply" class="mt-3 flex gap-2">
+                <input v-model="msg.replyText" placeholder="写下你的回复..." class="flex-1 px-3 py-2 border rounded-lg text-sm">
+                <button @click="replyToMessage(msg)" class="px-4 py-2 btn-primary rounded-lg text-sm">回复</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer v-if="!['login','register'].includes(currentPage) && !currentPage.startsWith('admin')" class="bg-gray-800 text-gray-300 mt-12">
+      <div class="max-w-7xl mx-auto px-4 py-12">
+        <div class="grid md:grid-cols-4 gap-8">
+          <div>
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center text-white font-bold">优</div>
+              <span class="text-lg font-bold text-white">优品商城</span>
+            </div>
+            <p class="text-sm text-gray-400">品质生活，优选好物。我们致力于为您提供最优质的商品和最贴心的服务。</p>
+          </div>
+          <div>
+            <h4 class="font-semibold text-white mb-4">关于我们</h4>
+            <ul class="space-y-2 text-sm"><li><a class="hover:text-primary cursor-pointer">公司简介</a></li><li><a class="hover:text-primary cursor-pointer">联系我们</a></li><li><a class="hover:text-primary cursor-pointer">加入我们</a></li><li><a class="hover:text-primary cursor-pointer">合作伙伴</a></li></ul>
+          </div>
+          <div>
+            <h4 class="font-semibold text-white mb-4">帮助中心</h4>
+            <ul class="space-y-2 text-sm"><li><a class="hover:text-primary cursor-pointer">购物指南</a></li><li><a class="hover:text-primary cursor-pointer">配送说明</a></li><li><a class="hover:text-primary cursor-pointer">退换货政策</a></li><li><a class="hover:text-primary cursor-pointer">常见问题</a></li></ul>
+          </div>
+          <div>
+            <h4 class="font-semibold text-white mb-4">关注我们</h4>
+            <div class="flex gap-3 mb-4">
+              <a class="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition cursor-pointer"><i class="fab fa-weixin"></i></a>
+              <a class="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition cursor-pointer"><i class="fab fa-weibo"></i></a>
+              <a class="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition cursor-pointer"><i class="fab fa-qq"></i></a>
+              <a class="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition cursor-pointer"><i class="fab fa-tiktok"></i></a>
+            </div>
+            <p class="text-sm text-gray-400"><i class="fas fa-phone mr-2"></i>400-888-8888</p>
+            <p class="text-sm text-gray-400 mt-1"><i class="fas fa-envelope mr-2"></i>service@youpin.com</p>
+          </div>
+        </div>
+        <div class="border-t border-gray-700 mt-8 pt-6 text-center text-sm text-gray-500">
+          <p>&copy; 2024 优品商城 YOUpin Mall. All rights reserved.</p>
+          <p class="mt-1">京ICP备2024088888号-1</p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Chat Widget -->
+    <div v-if="!currentPage.startsWith('admin') && !['login','register'].includes(currentPage)" class="fixed bottom-6 right-6 z-50">
+      <!-- Chat Window -->
+      <div v-if="chatOpen" class="absolute bottom-16 right-0 w-80 sm:w-96 bg-white rounded-2xl card-shadow overflow-hidden" style="height: 480px;">
+        <div class="gradient-primary px-4 py-3 flex items-center justify-between text-white">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><i class="fas fa-headset"></i></div>
+            <div><p class="font-semibold text-sm">小优客服</p><p class="text-xs opacity-80"><span class="inline-block w-2 h-2 bg-green-300 rounded-full mr-1"></span>在线</p></div>
+          </div>
+          <button @click="chatOpen=false" class="hover:bg-white/20 rounded-full w-7 h-7 flex items-center justify-center"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="p-3 overflow-y-auto" style="height: 350px;" ref="chatMessages">
+          <div v-for="(msg, i) in chatMessages" :key="i" class="mb-3">
+            <div v-if="msg.type==='system'" class="text-center"><span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">{{ msg.text }}</span></div>
+            <div v-else class="flex gap-2" :class="msg.from==='user' ? 'flex-row-reverse' : ''">
+              <div class="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-xs"
+                   :class="msg.from==='user' ? 'bg-blue-500' : 'bg-primary'">
+                {{ msg.from==='user' ? '我' : '客' }}
+              </div>
+              <div class="max-w-[75%] px-3 py-2 rounded-xl text-sm"
+                   :class="msg.from==='user' ? 'bg-blue-500 text-white rounded-tr-sm' : 'bg-gray-100 text-gray-700 rounded-tl-sm'">
+                {{ msg.text }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="border-t p-3">
+          <div class="flex gap-2 mb-2 overflow-x-auto no-scrollbar">
+            <button v-for="q in quickQuestions" :key="q" @click="sendChatMessage(q)" class="px-3 py-1 bg-orange-50 text-primary rounded-full text-xs whitespace-nowrap hover:bg-orange-100 transition">{{ q }}</button>
+          </div>
+          <div class="flex gap-2">
+            <input v-model="chatInput" @keyup.enter="sendChatMessage(chatInput)" placeholder="请输入消息..." class="flex-1 px-3 py-2 border rounded-xl text-sm">
+            <button @click="sendChatMessage(chatInput)" class="px-4 py-2 gradient-primary text-white rounded-xl text-sm">发送</button>
+          </div>
+        </div>
+      </div>
+      <!-- Float Button -->
+      <button @click="chatOpen=!chatOpen" class="w-14 h-14 gradient-primary text-white rounded-full card-shadow flex items-center justify-center hover:scale-110 transition-transform">
+        <i :class="chatOpen ? 'fa-times' : 'fa-headset'" class="fas text-xl"></i>
+      </button>
+    </div>
+  </template>
+
+  <!-- ==================== ADMIN PAGES ==================== -->
+  <template v-if="currentPage.startsWith('admin')">
+    <div class="flex h-screen overflow-hidden bg-gray-100">
+      <!-- Admin Sidebar -->
+      <aside class="w-64 bg-gray-900 text-gray-300 shrink-0 overflow-y-auto hidden lg:block">
+        <div class="p-4 flex items-center gap-3 border-b border-gray-800">
+          <div class="w-9 h-9 gradient-primary rounded-lg flex items-center justify-center text-white font-bold">优</div>
+          <span class="text-lg font-bold text-white">管理后台</span>
+        </div>
+        <div class="p-4 border-b border-gray-800">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">A</div>
+            <div><p class="text-sm font-medium text-white">管理员</p><p class="text-xs text-gray-500">超级管理员</p></div>
+          </div>
+        </div>
+        <nav class="py-2">
+          <div v-for="menu in adminMenus" :key="menu.key">
+            <a @click.prevent="navigateTo(menu.key)" class="flex items-center gap-3 px-4 py-3 text-sm cursor-pointer transition hover:bg-gray-800 hover:text-white"
+               :class="currentPage===menu.key ? 'bg-gray-800 text-white border-r-3 border-primary' : ''">
+              <i :class="menu.icon" class="w-5 text-center"></i>
+              <span>{{ menu.label }}</span>
+              <span v-if="menu.badge" class="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">{{ menu.badge }}</span>
+            </a>
+          </div>
+        </nav>
+      </aside>
+
+      <!-- Admin Main -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Admin Header -->
+        <header class="bg-white card-shadow px-6 py-3 flex items-center justify-between shrink-0 z-10">
+          <div class="flex items-center gap-4">
+            <button @click="adminSidebarOpen=!adminSidebarOpen" class="lg:hidden text-gray-600"><i class="fas fa-bars text-xl"></i></button>
+            <div class="text-sm text-gray-500 hidden sm:block">
+              <a @click.prevent="navigateTo('admin-dashboard')" class="hover:text-primary cursor-pointer">后台</a>
+              <i class="fas fa-angle-right text-xs mx-2"></i>
+              <span class="text-gray-800">{{ adminMenus.find(m=>m.key===currentPage)?.label || '仪表盘' }}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button @click="navigateTo('home')" class="text-sm text-gray-500 hover:text-primary transition"><i class="fas fa-home mr-1"></i>前台首页</button>
+            <button class="relative text-gray-500 hover:text-primary transition"><i class="fas fa-bell text-lg"></i><span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span></button>
+            <button @click="handleLogout" class="text-sm text-gray-500 hover:text-red-500 transition"><i class="fas fa-sign-out-alt mr-1"></i>退出</button>
+          </div>
+        </header>
+
+        <!-- Mobile sidebar overlay -->
+        <div v-if="adminSidebarOpen" class="lg:hidden fixed inset-0 z-40">
+          <div class="fixed inset-0 bg-black/50" @click="adminSidebarOpen=false"></div>
+          <aside class="fixed left-0 top-0 bottom-0 w-64 bg-gray-900 text-gray-300 overflow-y-auto">
+            <div class="p-4 flex items-center justify-between border-b border-gray-800">
+              <span class="text-lg font-bold text-white">管理后台</span>
+              <button @click="adminSidebarOpen=false" class="text-gray-400"><i class="fas fa-times"></i></button>
+            </div>
+            <nav class="py-2">
+              <a v-for="menu in adminMenus" :key="menu.key" @click.prevent="navigateTo(menu.key); adminSidebarOpen=false"
+                 class="flex items-center gap-3 px-4 py-3 text-sm cursor-pointer transition hover:bg-gray-800 hover:text-white"
+                 :class="currentPage===menu.key ? 'bg-gray-800 text-white' : ''">
+                <i :class="menu.icon" class="w-5 text-center"></i>{{ menu.label }}
+              </a>
+            </nav>
+          </aside>
+        </div>
+
+        <!-- Admin Content -->
+        <div class="flex-1 overflow-y-auto p-6">
+
+          <!-- ===== ADMIN DASHBOARD ===== -->
+          <div v-if="currentPage==='admin-dashboard'">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+              <div v-for="(stat, i) in dashboardStats" :key="i" class="bg-white rounded-xl p-5 card-shadow card-hover">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl text-white" :class="stat.gradient">
+                    <i :class="stat.icon"></i>
+                  </div>
+                  <span class="text-xs px-2 py-1 rounded-full" :class="stat.trend > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'">
+                    <i :class="stat.trend > 0 ? 'fa-arrow-up' : 'fa-arrow-down'" class="fas mr-1"></i>{{ Math.abs(stat.trend) }}%
+                  </span>
+                </div>
+                <p class="text-2xl font-bold mb-1">{{ stat.value }}</p>
+                <p class="text-sm text-gray-500">{{ stat.label }}</p>
+              </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid lg:grid-cols-3 gap-6 mb-6">
+              <div class="lg:col-span-2 bg-white rounded-xl p-5 card-shadow">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-semibold">销售趋势</h3>
+                  <div class="flex gap-2">
+                    <button v-for="p in ['7天','30天']" :key="p" @click="chartPeriod=p" class="px-3 py-1 rounded-full text-xs"
+                            :class="chartPeriod===p ? 'gradient-primary text-white' : 'bg-gray-100 text-gray-600'">{{ p }}</button>
+                  </div>
+                </div>
+                <canvas id="salesChart" height="250"></canvas>
+              </div>
+              <div class="bg-white rounded-xl p-5 card-shadow">
+                <h3 class="font-semibold mb-4">订单状态分布</h3>
+                <canvas id="orderPieChart" height="250"></canvas>
+              </div>
+            </div>
+
+            <!-- Bottom Row -->
+            <div class="grid lg:grid-cols-2 gap-6">
+              <!-- Recent Orders -->
+              <div class="bg-white rounded-xl p-5 card-shadow">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-semibold">最近订单</h3>
+                  <a @click.prevent="navigateTo('admin-orders')" class="text-primary text-sm cursor-pointer hover:underline">查看全部</a>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-sm">
+                    <thead><tr class="text-gray-500 border-b"><th class="pb-3 text-left font-medium">订单号</th><th class="pb-3 text-left font-medium">金额</th><th class="pb-3 text-left font-medium">状态</th><th class="pb-3 text-left font-medium">时间</th></tr></thead>
+                    <tbody>
+                      <tr v-for="order in allOrders.slice(0,5)" :key="order.id" class="border-b last:border-0 hover:bg-gray-50">
+                        <td class="py-3">{{ order.orderNo }}</td>
+                        <td class="py-3 price-color font-medium">¥{{ order.totalAmount.toFixed(2) }}</td>
+                        <td class="py-3"><span class="tag" :class="orderStatusClass(order.status)">{{ order.statusText }}</span></td>
+                        <td class="py-3 text-gray-500">{{ order.createdAt }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <!-- Top Products -->
+              <div class="bg-white rounded-xl p-5 card-shadow">
+                <h3 class="font-semibold mb-4">商品销售排行</h3>
+                <div class="space-y-3">
+                  <div v-for="(p, i) in topProducts" :key="p.id" class="flex items-center gap-3">
+                    <span class="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-white shrink-0"
+                          :class="i < 3 ? 'bg-primary' : 'bg-gray-400'">{{ i+1 }}</span>
+                    <img :src="p.image" class="w-10 h-10 rounded-lg object-cover shrink-0">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm line-clamp-1">{{ p.name }}</p>
+                      <div class="flex items-center justify-between text-xs text-gray-400">
+                        <span>销量 {{ p.sales }}</span>
+                        <span class="price-color font-medium">¥{{ (p.price * p.sales).toFixed(0) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== ADMIN PRODUCTS ===== -->
+          <div v-if="currentPage==='admin-products'">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-bold">商品管理</h2>
+              <button @click="openProductForm()" class="px-4 py-2 btn-primary rounded-lg text-sm"><i class="fas fa-plus mr-2"></i>添加商品</button>
+            </div>
+            <!-- Filters -->
+            <div class="bg-white rounded-xl p-4 card-shadow mb-4 flex flex-wrap gap-3">
+              <input v-model="adminProductSearch" placeholder="搜索商品名称/SKU" class="px-4 py-2 border rounded-lg text-sm w-60">
+              <select v-model="adminProductCategory" class="px-4 py-2 border rounded-lg text-sm">
+                <option value="">全部分类</option>
+                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+              </select>
+              <select v-model="adminProductStatus" class="px-4 py-2 border rounded-lg text-sm">
+                <option value="">全部状态</option><option value="active">上架</option><option value="inactive">下架</option>
+              </select>
+              <button @click="adminProductSearch=''; adminProductCategory=''; adminProductStatus=''" class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">重置</button>
+            </div>
+            <!-- Table -->
+            <div class="bg-white rounded-xl card-shadow overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead><tr class="bg-gray-50 text-gray-500">
+                    <th class="p-4 text-left font-medium"><input type="checkbox" class="rounded"></th>
+                    <th class="p-4 text-left font-medium">商品</th>
+                    <th class="p-4 text-left font-medium">分类</th>
+                    <th class="p-4 text-left font-medium">价格</th>
+                    <th class="p-4 text-left font-medium">库存</th>
+                    <th class="p-4 text-left font-medium">销量</th>
+                    <th class="p-4 text-left font-medium">状态</th>
+                    <th class="p-4 text-left font-medium">操作</th>
+                  </tr></thead>
+                  <tbody>
+                    <tr v-for="p in adminFilteredProducts" :key="p.id" class="border-b hover:bg-gray-50 transition">
+                      <td class="p-4"><input type="checkbox" class="rounded"></td>
+                      <td class="p-4">
+                        <div class="flex items-center gap-3">
+                          <img :src="p.image" class="w-12 h-12 rounded-lg object-cover">
+                          <div><p class="font-medium line-clamp-1">{{ p.name }}</p><p class="text-xs text-gray-400">SKU: {{ p.sku || 'SP' + p.id.toString().padStart(6,'0') }}</p></div>
+                        </div>
+                      </td>
+                      <td class="p-4">{{ getCategoryName(p.categoryId) }}</td>
+                      <td class="p-4"><span class="price-color font-medium">¥{{ p.price }}</span><br><span v-if="p.originalPrice" class="text-xs text-gray-400 line-through">¥{{ p.originalPrice }}</span></td>
+                      <td class="p-4"><span :class="p.stock < 10 ? 'text-red-500 font-medium' : ''">{{ p.stock }}</span><span v-if="p.stock < 10" class="tag bg-red-100 text-red-500 ml-1">预警</span></td>
+                      <td class="p-4">{{ p.sales }}</td>
+                      <td class="p-4">
+                        <button @click="p.active=!p.active" class="relative w-10 h-5 rounded-full transition-colors" :class="p.active !== false ? 'bg-green-500' : 'bg-gray-300'">
+                          <span class="absolute w-4 h-4 bg-white rounded-full top-0.5 transition-transform" :class="p.active !== false ? 'left-5' : 'left-0.5'"></span>
+                        </button>
+                      </td>
+                      <td class="p-4">
+                        <div class="flex gap-2">
+                          <button @click="openProductForm(p)" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
+                          <button @click="deleteProduct(p.id)" class="text-red-500 hover:text-red-700"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="px-4 py-3 border-t flex items-center justify-between text-sm text-gray-500">
+                <span>共 {{ adminFilteredProducts.length }} 件商品</span>
+                <div class="flex gap-1">
+                  <button class="px-3 py-1 border rounded hover:border-primary hover:text-primary">上一页</button>
+                  <button class="px-3 py-1 gradient-primary text-white rounded">1</button>
+                  <button class="px-3 py-1 border rounded hover:border-primary hover:text-primary">下一页</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Product Form Modal -->
+            <div v-if="showProductForm" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showProductForm=false">
+              <div class="fixed inset-0 bg-black/50"></div>
+              <div class="relative bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div class="sticky top-0 bg-white px-6 py-4 border-b flex items-center justify-between z-10">
+                  <h3 class="font-semibold text-lg">{{ editingProduct ? '编辑商品' : '添加商品' }}</h3>
+                  <button @click="showProductForm=false" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-lg"></i></button>
+                </div>
+                <form @submit.prevent="saveProduct" class="p-6 space-y-4">
+                  <div><label class="block text-sm font-medium mb-1">商品名称 *</label><input v-model="productForm.name" required class="w-full px-4 py-2.5 border rounded-xl text-sm"></div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium mb-1">分类 *</label>
+                      <select v-model="productForm.categoryId" required class="w-full px-4 py-2.5 border rounded-xl text-sm">
+                        <option value="">选择分类</option>
+                        <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                      </select>
+                    </div>
+                    <div><label class="block text-sm font-medium mb-1">品牌</label><input v-model="productForm.brand" class="w-full px-4 py-2.5 border rounded-xl text-sm"></div>
+                  </div>
+                  <div class="grid grid-cols-3 gap-4">
+                    <div><label class="block text-sm font-medium mb-1">售价 *</label><input v-model.number="productForm.price" type="number" step="0.01" required class="w-full px-4 py-2.5 border rounded-xl text-sm"></div>
+                    <div><label class="block text-sm font-medium mb-1">原价</label><input v-model.number="productForm.originalPrice" type="number" step="0.01" class="w-full px-4 py-2.5 border rounded-xl text-sm"></div>
+                    <div><label class="block text-sm font-medium mb-1">库存 *</label><input v-model.number="productForm.stock" type="number" required class="w-full px-4 py-2.5 border rounded-xl text-sm"></div>
+                  </div>
+                  <div><label class="block text-sm font-medium mb-1">商品图片URL</label><input v-model="productForm.image" placeholder="https://..." class="w-full px-4 py-2.5 border rounded-xl text-sm"></div>
+                  <div><label class="block text-sm font-medium mb-1">商品描述</label><textarea v-model="productForm.description" rows="3" class="w-full px-4 py-2.5 border rounded-xl text-sm"></textarea></div>
+                  <div class="flex gap-3 pt-4">
+                    <button type="button" @click="showProductForm=false" class="flex-1 py-2.5 border rounded-xl text-sm hover:bg-gray-50">取消</button>
+                    <button type="submit" class="flex-1 py-2.5 btn-primary rounded-xl text-sm font-medium">保存商品</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== ADMIN ORDERS ===== -->
+          <div v-if="currentPage==='admin-orders'">
+            <h2 class="text-xl font-bold mb-6">订单管理</h2>
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div v-for="s in orderAdminStats" :key="s.label" class="bg-white rounded-xl p-4 card-shadow text-center">
+                <div class="text-2xl font-bold" :style="{color: s.color}">{{ s.value }}</div>
+                <div class="text-xs text-gray-500 mt-1">{{ s.label }}</div>
+              </div>
+            </div>
+            <!-- Filters -->
+            <div class="bg-white rounded-xl p-4 card-shadow mb-4 flex flex-wrap gap-3">
+              <input v-model="adminOrderSearch" placeholder="订单号/用户名" class="px-4 py-2 border rounded-lg text-sm w-48">
+              <select v-model="adminOrderStatus" class="px-4 py-2 border rounded-lg text-sm">
+                <option value="">全部状态</option><option value="pending">待支付</option><option value="paid">待发货</option><option value="shipped">待收货</option><option value="completed">已完成</option><option value="cancelled">已取消</option>
+              </select>
+              <button @click="adminOrderSearch=''; adminOrderStatus=''" class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">重置</button>
+            </div>
+            <!-- Table -->
+            <div class="bg-white rounded-xl card-shadow overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead><tr class="bg-gray-50 text-gray-500">
+                    <th class="p-4 text-left font-medium">订单号</th>
+                    <th class="p-4 text-left font-medium">用户</th>
+                    <th class="p-4 text-left font-medium">商品</th>
+                    <th class="p-4 text-left font-medium">金额</th>
+                    <th class="p-4 text-left font-medium">状态</th>
+                    <th class="p-4 text-left font-medium">时间</th>
+                    <th class="p-4 text-left font-medium">操作</th>
+                  </tr></thead>
+                  <tbody>
+                    <tr v-for="order in adminFilteredOrders" :key="order.id" class="border-b hover:bg-gray-50">
+                      <td class="p-4 font-mono">{{ order.orderNo }}</td>
+                      <td class="p-4">{{ order.userName || '用户' }}</td>
+                      <td class="p-4"><div class="flex -space-x-2"><img v-for="item in order.items.slice(0,3)" :key="item.id" :src="item.image" class="w-8 h-8 rounded border-2 border-white object-cover"></div></td>
+                      <td class="p-4 price-color font-medium">¥{{ order.totalAmount.toFixed(2) }}</td>
+                      <td class="p-4"><span class="tag" :class="orderStatusClass(order.status)">{{ order.statusText }}</span></td>
+                      <td class="p-4 text-gray-500">{{ order.createdAt }}</td>
+                      <td class="p-4">
+                        <div class="flex gap-2">
+                          <button v-if="order.status==='paid'" @click="shipOrder(order)" class="text-blue-500 hover:text-blue-700 text-xs"><i class="fas fa-truck mr-1"></i>发货</button>
+                          <button @click="viewOrderDetail(order)" class="text-gray-500 hover:text-primary text-xs"><i class="fas fa-eye mr-1"></i>详情</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== ADMIN USERS ===== -->
+          <div v-if="currentPage==='admin-users'">
+            <h2 class="text-xl font-bold mb-6">用户管理</h2>
+            <div class="bg-white rounded-xl p-4 card-shadow mb-4 flex flex-wrap gap-3">
+              <input v-model="adminUserSearch" placeholder="用户名/邮箱" class="px-4 py-2 border rounded-lg text-sm w-60">
+              <button @click="adminUserSearch=''" class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">重置</button>
+            </div>
+            <div class="bg-white rounded-xl card-shadow overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead><tr class="bg-gray-50 text-gray-500">
+                    <th class="p-4 text-left font-medium">ID</th>
+                    <th class="p-4 text-left font-medium">用户</th>
+                    <th class="p-4 text-left font-medium">邮箱</th>
+                    <th class="p-4 text-left font-medium">角色</th>
+                    <th class="p-4 text-left font-medium">积分</th>
+                    <th class="p-4 text-left font-medium">注册时间</th>
+                    <th class="p-4 text-left font-medium">状态</th>
+                    <th class="p-4 text-left font-medium">操作</th>
+                  </tr></thead>
+                  <tbody>
+                    <tr v-for="u in adminFilteredUsers" :key="u.id" class="border-b hover:bg-gray-50">
+                      <td class="p-4">{{ u.id }}</td>
+                      <td class="p-4">
+                        <div class="flex items-center gap-2">
+                          <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" :style="{background: stringToColor(u.nickname)}">{{ u.nickname[0] }}</div>
+                          <div><p class="font-medium">{{ u.nickname }}</p><p class="text-xs text-gray-400">{{ u.username }}</p></div>
+                        </div>
+                      </td>
+                      <td class="p-4 text-gray-500">{{ u.email }}</td>
+                      <td class="p-4"><span class="tag" :class="u.role==='admin' ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-600'">{{ u.role==='admin' ? '管理员' : '普通用户' }}</span></td>
+                      <td class="p-4">{{ u.points || 0 }}</td>
+                      <td class="p-4 text-gray-500">{{ u.createdAt }}</td>
+                      <td class="p-4">
+                        <button @click="u.active=!u.active" class="relative w-10 h-5 rounded-full transition-colors" :class="u.active !== false ? 'bg-green-500' : 'bg-gray-300'">
+                          <span class="absolute w-4 h-4 bg-white rounded-full top-0.5 transition-transform" :class="u.active !== false ? 'left-5' : 'left-0.5'"></span>
+                        </button>
+                      </td>
+                      <td class="p-4"><button class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== ADMIN STATISTICS ===== -->
+          <div v-if="currentPage==='admin-stats'">
+            <h2 class="text-xl font-bold mb-6">数据统计</h2>
+            <div class="grid lg:grid-cols-2 gap-6 mb-6">
+              <div class="bg-white rounded-xl p-5 card-shadow">
+                <h3 class="font-semibold mb-4">分类销售占比</h3>
+                <canvas id="categorySalesChart" height="300"></canvas>
+              </div>
+              <div class="bg-white rounded-xl p-5 card-shadow">
+                <h3 class="font-semibold mb-4">用户增长趋势</h3>
+                <canvas id="userGrowthChart" height="300"></canvas>
+              </div>
+            </div>
+            <div class="bg-white rounded-xl p-5 card-shadow mb-6">
+              <h3 class="font-semibold mb-4">月度营收报表</h3>
+              <canvas id="revenueChart" height="300"></canvas>
+            </div>
+            <!-- Stats Summary -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="bg-white rounded-xl p-5 card-shadow text-center">
+                <div class="text-3xl font-bold text-primary mb-1">¥128,560</div>
+                <div class="text-sm text-gray-500">本月销售额</div>
+                <div class="text-xs text-green-500 mt-1"><i class="fas fa-arrow-up"></i> 12.5%</div>
+              </div>
+              <div class="bg-white rounded-xl p-5 card-shadow text-center">
+                <div class="text-3xl font-bold text-blue-500 mb-1">1,256</div>
+                <div class="text-sm text-gray-500">本月订单数</div>
+                <div class="text-xs text-green-500 mt-1"><i class="fas fa-arrow-up"></i> 8.3%</div>
+              </div>
+              <div class="bg-white rounded-xl p-5 card-shadow text-center">
+                <div class="text-3xl font-bold text-green-500 mb-1">356</div>
+                <div class="text-sm text-gray-500">新增用户</div>
+                <div class="text-xs text-green-500 mt-1"><i class="fas fa-arrow-up"></i> 15.2%</div>
+              </div>
+              <div class="bg-white rounded-xl p-5 card-shadow text-center">
+                <div class="text-3xl font-bold text-purple-500 mb-1">¥102</div>
+                <div class="text-sm text-gray-500">客单价</div>
+                <div class="text-xs text-red-500 mt-1"><i class="fas fa-arrow-down"></i> 2.1%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== ADMIN MESSAGES ===== -->
+          <div v-if="currentPage==='admin-messages'">
+            <h2 class="text-xl font-bold mb-6">留言管理</h2>
+            <div class="bg-white rounded-xl card-shadow overflow-hidden">
+              <table class="w-full text-sm">
+                <thead><tr class="bg-gray-50 text-gray-500">
+                  <th class="p-4 text-left font-medium">用户</th>
+                  <th class="p-4 text-left font-medium">内容</th>
+                  <th class="p-4 text-left font-medium">时间</th>
+                  <th class="p-4 text-left font-medium">点赞</th>
+                  <th class="p-4 text-left font-medium">操作</th>
+                </tr></thead>
+                <tbody>
+                  <tr v-for="msg in messages" :key="msg.id" class="border-b hover:bg-gray-50">
+                    <td class="p-4 font-medium">{{ msg.user }}</td>
+                    <td class="p-4 text-gray-600 max-w-xs truncate">{{ msg.content }}</td>
+                    <td class="p-4 text-gray-500">{{ msg.time }}</td>
+                    <td class="p-4">{{ msg.likes }}</td>
+                    <td class="p-4">
+                      <div class="flex gap-2">
+                        <button @click="adminReplyMessage(msg)" class="text-blue-500 hover:text-blue-700 text-xs"><i class="fas fa-reply mr-1"></i>回复</button>
+                        <button @click="deleteMessage(msg.id)" class="text-red-500 hover:text-red-700 text-xs"><i class="fas fa-trash mr-1"></i>删除</button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+const { createApp, ref, reactive, computed, watch, onMounted, nextTick } = Vue;
+
+createApp({
+  setup() {
+    // ========== ROUTING ==========
+    const currentPage = ref('home');
+    const mobileMenuOpen = ref(false);
+    const adminSidebarOpen = ref(false);
+
+    function navigateTo(page) {
+      currentPage.value = page;
+      window.scrollTo(0, 0);
+      window.location.hash = page;
+      mobileMenuOpen.value = false;
+      if (page.startsWith('admin') && !isLoggedIn.value) {
+        currentPage.value = 'login';
+        showToast('请先登录', 'warning');
+        return;
+      }
+      if (['user','orders','cart'].includes(page) && !isLoggedIn.value && page !== 'cart') {
+        currentPage.value = 'login';
+        showToast('请先登录', 'warning');
+        return;
+      }
+      // Init charts after navigation
+      if (page === 'admin-dashboard') nextTick(() => initDashboardCharts());
+      if (page === 'admin-stats') nextTick(() => initStatsCharts());
+    }
+
+    // Handle hash routing
+    onMounted(() => {
+      const hash = window.location.hash.slice(1);
+      if (hash) currentPage.value = hash;
+      window.addEventListener('hashchange', () => {
+        const h = window.location.hash.slice(1);
+        if (h) currentPage.value = h;
+      });
+      checkAuth();
+      startBannerAutoplay();
+      startFlashCountdown();
+    });
+
+    // ========== TOAST ==========
+    const toasts = ref([]);
+    function showToast(message, type = 'info') {
+      const t = { message, type };
+      toasts.value.push(t);
+      setTimeout(() => { const idx = toasts.value.indexOf(t); if (idx > -1) toasts.value.splice(idx, 1); }, 3000);
+    }
+
+    // ========== MODAL ==========
+    const modal = reactive({ show: false, type: 'confirm', title: '', message: '', onConfirm: null });
+    function showModal(title, message, type = 'confirm', onConfirm = null) {
+      Object.assign(modal, { show: true, type, title, message, onConfirm });
+    }
+
+    // ========== AUTH ==========
+    const currentUser = ref(null);
+    const isLoggedIn = computed(() => !!currentUser.value);
+    const isAdmin = computed(() => currentUser.value?.role === 'admin');
+    const loginForm = reactive({ username: '', password: '', remember: false });
+    const registerForm = reactive({ username: '', nickname: '', email: '', password: '', confirmPassword: '', agree: false });
+    const showPassword = ref(false);
+    const loginLoading = ref(false);
+
+    const mockUsers = ref([
+      { id: 1, username: 'admin', password: '123456', nickname: '管理员', email: 'admin@youpin.com', role: 'admin', points: 9999, createdAt: '2024-01-01', active: true },
+      { id: 2, username: 'user1', password: '123456', nickname: '张小明', email: 'zhangxm@email.com', role: 'user', points: 1280, createdAt: '2024-03-15', active: true },
+      { id: 3, username: 'user2', password: '123456', nickname: '李小红', email: 'lixh@email.com', role: 'user', points: 860, createdAt: '2024-05-20', active: true },
+      { id: 4, username: 'user3', password: '123456', nickname: '王大力', email: 'wangdl@email.com', role: 'user', points: 2450, createdAt: '2024-02-10', active: true },
+      { id: 5, username: 'user4', password: '123456', nickname: '赵小云', email: 'zhaoxy@email.com', role: 'user', points: 520, createdAt: '2024-06-01', active: true },
+    ]);
+
+    function checkAuth() {
+      const stored = localStorage.getItem('youpin_user');
+      if (stored) {
+        try { currentUser.value = JSON.parse(stored); } catch(e) {}
+      }
+    }
+
+    async function handleLogin() {
+      loginLoading.value = true;
+      await new Promise(r => setTimeout(r, 800));
+      const user = mockUsers.value.find(u => u.username === loginForm.username && u.password === loginForm.password);
+      loginLoading.value = false;
+      if (user) {
+        const { password, ...userData } = user;
+        currentUser.value = userData;
+        localStorage.setItem('youpin_user', JSON.stringify(userData));
+        localStorage.setItem('youpin_token', 'mock_token_' + user.id);
+        showToast('登录成功！欢迎回来，' + user.nickname, 'success');
+        navigateTo('home');
+      } else {
+        showToast('用户名或密码错误', 'error');
+      }
+    }
+
+    function handleRegister() {
+      if (registerForm.password !== registerForm.confirmPassword) { showToast('两次密码输入不一致', 'error'); return; }
+      if (registerForm.password.length < 6) { showToast('密码至少6位', 'error'); return; }
+      if (mockUsers.value.find(u => u.username === registerForm.username)) { showToast('用户名已存在', 'error'); return; }
+      const newUser = {
+        id: mockUsers.value.length + 1, username: registerForm.username, password: registerForm.password,
+        nickname: registerForm.nickname, email: registerForm.email, role: 'user', points: 100,
+        createdAt: new Date().toISOString().slice(0,10), active: true
+      };
+      mockUsers.value.push(newUser);
+      showToast('注册成功！已赠送100积分', 'success');
+      navigateTo('login');
+    }
+
+    function handleLogout() {
+      currentUser.value = null;
+      localStorage.removeItem('youpin_user');
+      localStorage.removeItem('youpin_token');
+      showToast('已退出登录', 'info');
+      navigateTo('home');
+    }
+
+    const passwordStrength = computed(() => {
+      const p = registerForm.password;
+      if (!p) return 0;
+      let s = 0;
+      if (p.length >= 6) s++;
+      if (/[A-Z]/.test(p) && /[a-z]/.test(p)) s++;
+      if (/\d/.test(p) && /[^a-zA-Z0-9]/.test(p)) s++;
+      return s;
+    });
+
+    // ========== CATEGORIES ==========
+    const categories = ref([
+      { id: 1, name: '数码电子', icon: 'fas fa-laptop', color: '#007AFF' },
+      { id: 2, name: '服饰鞋包', icon: 'fas fa-tshirt', color: '#FF6B35' },
+      { id: 3, name: '美妆护肤', icon: 'fas fa-spa', color: '#AF52DE' },
+      { id: 4, name: '家居生活', icon: 'fas fa-couch', color: '#34C759' },
+      { id: 5, name: '食品饮料', icon: 'fas fa-apple-alt', color: '#FF3B30' },
+      { id: 6, name: '运动户外', icon: 'fas fa-running', color: '#FF9500' },
+    ]);
+
+    function getCategoryName(id) { return categories.value.find(c => c.id === id)?.name || '未分类'; }
+
+    // ========== PRODUCTS ==========
+    const productImages = [
+      'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1546868871-af0de0ae72be?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1598032895455-1e67f1fa503b?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400&h=400&fit=crop',
+    ];
+
+    const allProducts = ref([
+      { id: 1, name: 'MacBook Pro 14英寸 M3芯片 笔记本电脑', description: '搭载M3 Pro芯片，18GB内存，512GB固态硬盘', price: 12999, originalPrice: 14999, categoryId: 1, image: productImages[0], images: [productImages[0], productImages[11]], stock: 56, sales: 2341, reviews: 892, rating: 4.8, tag: '热销', specs: [{name:'颜色',options:['银色','深空灰']},{name:'内存',options:['18GB','36GB']}] },
+      { id: 2, name: '经典简约石英手表 商务休闲腕表', description: '瑞士机芯，蓝宝石镜面，30米防水', price: 599, originalPrice: 1299, categoryId: 2, image: productImages[1], images: [productImages[1]], stock: 128, sales: 1856, reviews: 567, rating: 4.6, tag: '热销', specs: [{name:'颜色',options:['黑色','银色','玫瑰金']},{name:'表带',options:['皮带','钢带']}] },
+      { id: 3, name: 'Sony WH-1000XM5 头戴式降噪耳机', description: '行业领先降噪，30小时续航，Hi-Res音频', price: 2299, originalPrice: 2999, categoryId: 1, image: productImages[2], images: [productImages[2], productImages[11]], stock: 89, sales: 3210, reviews: 1234, rating: 4.9, tag: '热销', specs: [{name:'颜色',options:['黑色','银色','午夜蓝']}] },
+      { id: 4, name: 'Nike Air Max 270 气垫运动鞋', description: '大Air气垫缓震，网面透气，潮流百搭', price: 899, originalPrice: 1299, categoryId: 6, image: productImages[3], images: [productImages[3], productImages[8]], stock: 234, sales: 4521, reviews: 2345, rating: 4.7, tag: '热销', specs: [{name:'颜色',options:['黑白','纯白','灰蓝']},{name:'尺码',options:['39','40','41','42','43','44']}] },
+      { id: 5, name: 'Polaroid 拍立得相机 复古胶片机', description: '即拍即得，自动曝光，复古造型', price: 459, originalPrice: 699, categoryId: 1, image: productImages[4], images: [productImages[4]], stock: 67, sales: 987, reviews: 432, rating: 4.5, tag: '新品' },
+      { id: 6, name: '轻奢真皮单肩包 简约通勤女包', description: '头层牛皮，大容量收纳，百搭款式', price: 799, originalPrice: 1599, categoryId: 2, image: productImages[5], images: [productImages[5]], stock: 45, sales: 1567, reviews: 678, rating: 4.6, tag: '' },
+      { id: 7, name: 'Ray-Ban 飞行员太阳镜 偏光防晒', description: '经典飞行员款，偏光镜片，UV400防护', price: 1180, originalPrice: 1580, categoryId: 2, image: productImages[6], images: [productImages[6]], stock: 112, sales: 2890, reviews: 901, rating: 4.8, tag: '' },
+      { id: 8, name: 'La Mer 海蓝之谜 经典精华面霜', description: '深层修护，细腻润肤，奢华护肤', price: 2380, originalPrice: 2980, categoryId: 3, image: productImages[7], images: [productImages[7]], stock: 34, sales: 567, reviews: 234, rating: 4.9, tag: '新品' },
+      { id: 9, name: 'Adidas Ultraboost 22 专业跑步鞋', description: 'Boost科技中底，Primeknit编织鞋面', price: 1099, originalPrice: 1499, categoryId: 6, image: productImages[8], images: [productImages[8], productImages[3]], stock: 189, sales: 3456, reviews: 1567, rating: 4.7, tag: '' },
+      { id: 10, name: '时尚帆布双肩包 休闲旅行背包', description: '加厚帆布，多隔层设计，男女通用', price: 189, originalPrice: 399, categoryId: 2, image: productImages[9], images: [productImages[9]], stock: 567, sales: 6789, reviews: 3456, rating: 4.5, tag: '热销' },
+      { id: 11, name: '精美陶瓷茶具套装 中式功夫茶', description: '德化白瓷，手工制作，礼盒装', price: 268, originalPrice: 498, categoryId: 4, image: productImages[10], images: [productImages[10]], stock: 78, sales: 1234, reviews: 567, rating: 4.6, tag: '新品' },
+      { id: 12, name: '高品质蓝牙降噪耳机 运动无线', description: '主动降噪，IPX5防水，8小时续航', price: 399, originalPrice: 699, categoryId: 1, image: productImages[11], images: [productImages[11], productImages[2]], stock: 345, sales: 5678, reviews: 2345, rating: 4.6, tag: '' },
+      { id: 13, name: '复古真皮短靴 马丁靴 英伦风', description: '进口头层牛皮，耐磨橡胶底', price: 699, originalPrice: 999, categoryId: 2, image: productImages[12], images: [productImages[12]], stock: 156, sales: 2345, reviews: 987, rating: 4.7, tag: '' },
+      { id: 14, name: 'SK-II 神仙水 护肤精华露 230ml', description: 'Pitera精华，改善肤质，焕发光彩', price: 1590, originalPrice: 1890, categoryId: 3, image: productImages[13], images: [productImages[13]], stock: 89, sales: 4567, reviews: 2345, rating: 4.8, tag: '热销' },
+      { id: 15, name: '纯棉经典圆领T恤 简约百搭款', description: '100%新疆长绒棉，亲肤舒适', price: 89, originalPrice: 199, categoryId: 2, image: productImages[14], images: [productImages[14]], stock: 890, sales: 12345, reviews: 5678, rating: 4.5, tag: '' },
+      { id: 16, name: '法国进口红酒 干红葡萄酒 750ml', description: '波尔多产区，橡木桶陈酿12个月', price: 168, originalPrice: 398, categoryId: 5, image: productImages[15], images: [productImages[15]], stock: 234, sales: 3456, reviews: 1234, rating: 4.6, tag: '' },
+      { id: 17, name: '北欧简约落地灯 客厅卧室装饰灯', description: 'LED节能光源，三色调光，金属灯身', price: 359, originalPrice: 599, categoryId: 4, image: productImages[16], images: [productImages[16]], stock: 67, sales: 890, reviews: 345, rating: 4.4, tag: '新品' },
+      { id: 18, name: '意式轻奢沙发抱枕 绒面靠垫', description: '高密度PP棉填充，可拆洗', price: 79, originalPrice: 159, categoryId: 4, image: productImages[17], images: [productImages[17]], stock: 456, sales: 7890, reviews: 3456, rating: 4.5, tag: '' },
+      { id: 19, name: 'iPad Pro 12.9英寸 M2芯片', description: 'Liquid Retina XDR显示屏，创造力无限', price: 8999, originalPrice: 9999, categoryId: 1, image: productImages[18], images: [productImages[18], productImages[0]], stock: 45, sales: 1234, reviews: 567, rating: 4.9, tag: '新品', specs: [{name:'颜色',options:['银色','深空灰']},{name:'容量',options:['128GB','256GB','512GB','1TB']}] },
+      { id: 20, name: '专业瑜伽垫 加厚防滑运动垫', description: 'TPE环保材质，双面防滑纹理', price: 128, originalPrice: 268, categoryId: 6, image: productImages[19], images: [productImages[19]], stock: 678, sales: 9876, reviews: 4567, rating: 4.7, tag: '' },
+    ]);
+
+    const recommendedProducts = computed(() => allProducts.value.slice(0, 8));
+    const hotProducts = computed(() => [...allProducts.value].sort((a, b) => b.sales - a.sales));
+    const newProducts = computed(() => allProducts.value.filter(p => p.tag === '新品'));
+    const topProducts = computed(() => [...allProducts.value].sort((a, b) => b.sales - a.sales).slice(0, 8));
+
+    // Flash sale
+    const flashSaleProducts = computed(() => allProducts.value.slice(0, 5).map(p => ({
+      ...p, price: Math.round(p.price * 0.5), salePercent: Math.floor(Math.random() * 40 + 50)
+    })));
+
+    const flashCountdown = reactive({ hours: '02', minutes: '30', seconds: '00' });
+    let flashTimer;
+    function startFlashCountdown() {
+      let total = 2 * 3600 + 30 * 60;
+      flashTimer = setInterval(() => {
+        total--;
+        if (total <= 0) total = 9000;
+        flashCountdown.hours = String(Math.floor(total / 3600)).padStart(2, '0');
+        flashCountdown.minutes = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+        flashCountdown.seconds = String(total % 60).padStart(2, '0');
+      }, 1000);
+    }
+
+    // ========== BANNER ==========
+    const banners = ref([
+      { title: '年终大促 狂欢来袭', subtitle: '全场低至3折，爆款限时秒杀', bg: 'linear-gradient(135deg, #FF6B35, #FF3B30)' },
+      { title: '新品首发 潮流尖货', subtitle: '最新科技产品，抢先体验', bg: 'linear-gradient(135deg, #007AFF, #5AC8FA)' },
+      { title: '品质生活 优选好物', subtitle: '精选全球优质商品，品质保障', bg: 'linear-gradient(135deg, #34C759, #30D158)' },
+      { title: '会员专享 超值福利', subtitle: '会员日全场再享95折', bg: 'linear-gradient(135deg, #AF52DE, #BF5AF2)' },
+    ]);
+    const currentBanner = ref(0);
+    let bannerTimer;
+    function startBannerAutoplay() {
+      bannerTimer = setInterval(() => { currentBanner.value = (currentBanner.value + 1) % banners.value.length; }, 4000);
+    }
+    function nextBanner() { currentBanner.value = (currentBanner.value + 1) % banners.value.length; }
+    function prevBanner() { currentBanner.value = (currentBanner.value - 1 + banners.value.length) % banners.value.length; }
+
+    // ========== PRODUCT LISTING ==========
+    const searchKeyword = ref('');
+    const filterCategory = ref(0);
+    const filterPriceRange = ref(null);
+    const filterPriceMin = ref(null);
+    const filterPriceMax = ref(null);
+    const filterInStock = ref(false);
+    const filterOnSale = ref(false);
+    const currentSort = ref('default');
+    const currentPageNum = ref(1);
+    const pageSize = ref(12);
+
+    const priceRanges = ref([
+      { label: '全部', min: 0, max: Infinity },
+      { label: '¥0 - ¥100', min: 0, max: 100 },
+      { label: '¥100 - ¥500', min: 100, max: 500 },
+      { label: '¥500 - ¥1000', min: 500, max: 1000 },
+      { label: '¥1000 - ¥5000', min: 1000, max: 5000 },
+      { label: '¥5000+', min: 5000, max: Infinity },
+    ]);
+
+    const sortOptions = [
+      { label: '综合', value: 'default' },
+      { label: '销量', value: 'sales' },
+      { label: '价格↑', value: 'price-asc' },
+      { label: '价格↓', value: 'price-desc' },
+      { label: '新品', value: 'new' },
+    ];
+
+    const selectedCategoryName = computed(() => {
+      if (filterCategory.value === 0) return '';
+      return categories.value.find(c => c.id === filterCategory.value)?.name || '';
+    });
+
+    const filteredProducts = computed(() => {
+      let list = [...allProducts.value];
+      if (searchKeyword.value) list = list.filter(p => p.name.toLowerCase().includes(searchKeyword.value.toLowerCase()));
+      if (filterCategory.value) list = list.filter(p => p.categoryId === filterCategory.value);
+      if (filterPriceRange.value) list = list.filter(p => p.price >= filterPriceRange.value.min && p.price <= filterPriceRange.value.max);
+      if (filterInStock.value) list = list.filter(p => p.stock > 0);
+      if (filterOnSale.value) list = list.filter(p => p.originalPrice && p.price < p.originalPrice);
+      switch (currentSort.value) {
+        case 'sales': list.sort((a, b) => b.sales - a.sales); break;
+        case 'price-asc': list.sort((a, b) => a.price - b.price); break;
+        case 'price-desc': list.sort((a, b) => b.price - a.price); break;
+        case 'new': list.sort((a, b) => (b.tag === '新品' ? 1 : 0) - (a.tag === '新品' ? 1 : 0)); break;
+      }
+      return list;
+    });
+
+    const totalPages = computed(() => Math.ceil(filteredProducts.value.length / pageSize.value));
+    const paginatedProducts = computed(() => {
+      const start = (currentPageNum.value - 1) * pageSize.value;
+      return filteredProducts.value.slice(start, start + pageSize.value);
+    });
+
+    function doSearch() { navigateTo('products'); currentPageNum.value = 1; }
+    function filterByCategory(catId) { filterCategory.value = catId; searchKeyword.value = ''; currentPageNum.value = 1; navigateTo('products'); }
+    function applyPriceFilter() {
+      if (filterPriceMin.value != null || filterPriceMax.value != null) {
+        filterPriceRange.value = { label: '自定义', min: filterPriceMin.value || 0, max: filterPriceMax.value || Infinity };
+      }
+      currentPageNum.value = 1;
+    }
+    function resetFilters() { filterCategory.value = 0; filterPriceRange.value = null; filterInStock.value = false; filterOnSale.value = false; searchKeyword.value = ''; currentSort.value = 'default'; currentPageNum.value = 1; }
+    function loadProducts() { currentPageNum.value = 1; }
+
+    // ========== PRODUCT DETAIL ==========
+    const currentProduct = ref(null);
+    const currentImageIndex = ref(0);
+    const detailQuantity = ref(1);
+    const detailTab = ref('商品详情');
+    const selectedSpecs = reactive({});
+
+    function viewProduct(id) {
+      currentProduct.value = allProducts.value.find(p => p.id === id);
+      currentImageIndex.value = 0;
+      detailQuantity.value = 1;
+      detailTab.value = '商品详情';
+      navigateTo('detail');
+    }
+    function selectSpec(name, value) { selectedSpecs[name] = value; }
+    function getProductById(id) { return allProducts.value.find(p => p.id === id); }
+
+    const mockReviews = ref([
+      { id: 1, user: '小明', stars: 5, content: '非常好用，质量很棒！物流也很快，包装完好无损。', date: '2024-10-15', images: [productImages[0]] },
+      { id: 2, user: '花花', stars: 5, content: '颜值很高，朋友都说好看。性价比超高，推荐购买！', date: '2024-10-12', images: [] },
+      { id: 3, user: '大壮', stars: 4, content: '整体还不错，但配送有点慢。产品本身很满意。', date: '2024-10-08', images: [productImages[1], productImages[2]] },
+      { id: 4, user: '小丽', stars: 5, content: '第二次购买了，一如既往的好！客服态度也很好。', date: '2024-10-05', images: [] },
+    ]);
+
+    // ========== CART ==========
+    const cartItems = ref([]);
+    const cartSelectAll = ref(true);
+    const cartTotalCount = computed(() => cartItems.value.reduce((s, i) => s + i.quantity, 0));
+    const cartSelectedCount = computed(() => cartItems.value.filter(i => i.selected).reduce((s, i) => s + i.quantity, 0));
+    const cartSelectedAmount = computed(() => cartItems.value.filter(i => i.selected).reduce((s, i) => s + i.price * i.quantity, 0));
+
+    // Load cart from localStorage
+    onMounted(() => {
+      const stored = localStorage.getItem('youpin_cart');
+      if (stored) try { cartItems.value = JSON.parse(stored); } catch(e) {}
+    });
+
+    function saveCart() { localStorage.setItem('youpin_cart', JSON.stringify(cartItems.value)); }
+
+    function addToCart(product, quantity = 1) {
+      const existing = cartItems.value.find(i => i.productId === product.id);
+      if (existing) {
+        existing.quantity += quantity;
+      } else {
+        cartItems.value.push({
+          id: Date.now(), productId: product.id, name: product.name, image: product.image,
+          price: product.price, quantity, selected: true, spec: ''
+        });
+      }
+      saveCart();
+      showToast(`已加入购物车: ${product.name}`, 'success');
+    }
+
+    function removeFromCart(id) {
+      cartItems.value = cartItems.value.filter(i => i.id !== id);
+      saveCart();
+      showToast('已从购物车移除', 'info');
+    }
+
+    function updateCartQuantity(id, qty) {
+      const item = cartItems.value.find(i => i.id === id);
+      if (item) { item.quantity = Math.max(1, qty); saveCart(); }
+    }
+
+    function toggleSelectAll() { cartItems.value.forEach(i => i.selected = cartSelectAll.value); }
+
+    function removeSelectedFromCart() {
+      if (!cartItems.value.some(i => i.selected)) { showToast('请先选择商品', 'warning'); return; }
+      showModal('确认删除', '确定删除选中的商品吗？', 'confirm', () => {
+        cartItems.value = cartItems.value.filter(i => !i.selected);
+        saveCart();
+        showToast('已删除选中商品', 'success');
+      });
+    }
+
+    function buyNow() {
+      if (!isLoggedIn.value) { showToast('请先登录', 'warning'); navigateTo('login'); return; }
+      addToCart(currentProduct.value, detailQuantity.value);
+      navigateTo('cart');
+    }
+
+    function goCheckout() {
+      if (!isLoggedIn.value) { showToast('请先登录', 'warning'); navigateTo('login'); return; }
+      if (cartSelectedCount.value === 0) { showToast('请选择要结算的商品', 'warning'); return; }
+      const selectedItems = cartItems.value.filter(i => i.selected);
+      const order = createOrder(selectedItems);
+      cartItems.value = cartItems.value.filter(i => !i.selected);
+      saveCart();
+      showModal('下单成功', `订单号: ${order.orderNo}\n应付金额: ¥${order.totalAmount.toFixed(2)}`, 'success', () => navigateTo('orders'));
+    }
+
+    // ========== FAVORITES ==========
+    const favorites = ref(JSON.parse(localStorage.getItem('youpin_favorites') || '[]'));
+    function isFavorite(id) { return favorites.value.includes(id); }
+    function toggleFavorite(id) {
+      const idx = favorites.value.indexOf(id);
+      if (idx > -1) { favorites.value.splice(idx, 1); showToast('已取消收藏', 'info'); }
+      else { favorites.value.push(id); showToast('已加入收藏', 'success'); }
+      localStorage.setItem('youpin_favorites', JSON.stringify(favorites.value));
+    }
+
+    // ========== ORDERS ==========
+    const allOrders = ref([]);
+    const myOrders = computed(() => allOrders.value.filter(o => !currentUser.value || o.userId === currentUser.value.id));
+    const orderTabKey = ref('all');
+    const orderSearch = ref('');
+    const orderTabs = computed(() => [
+      { key: 'all', label: '全部订单' },
+      { key: 'pending', label: '待支付', count: myOrders.value.filter(o => o.status === 'pending').length || 0 },
+      { key: 'paid', label: '待发货', count: myOrders.value.filter(o => o.status === 'paid').length || 0 },
+      { key: 'shipped', label: '待收货', count: myOrders.value.filter(o => o.status === 'shipped').length || 0 },
+      { key: 'completed', label: '已完成' },
+      { key: 'cancelled', label: '已取消' },
+    ]);
+
+    const filteredOrders = computed(() => {
+      let list = currentPage.value.startsWith('admin') ? allOrders.value : myOrders.value;
+      if (orderTabKey.value !== 'all') list = list.filter(o => o.status === orderTabKey.value);
+      if (orderSearch.value) list = list.filter(o => o.orderNo.includes(orderSearch.value) || o.items.some(i => i.name.includes(orderSearch.value)));
+      return list;
+    });
+
+    function orderStatusClass(status) {
+      const map = { pending: 'bg-yellow-100 text-yellow-700', paid: 'bg-blue-100 text-blue-700', shipped: 'bg-purple-100 text-purple-700', completed: 'bg-green-100 text-green-700', cancelled: 'bg-gray-100 text-gray-600' };
+      return map[status] || 'bg-gray-100 text-gray-600';
+    }
+
+    function createOrder(items) {
+      const order = {
+        id: allOrders.value.length + 1,
+        orderNo: 'YP' + Date.now().toString().slice(-10),
+        userId: currentUser.value?.id || 0,
+        userName: currentUser.value?.nickname || '游客',
+        items: items.map(i => ({ ...i })),
+        totalAmount: items.reduce((s, i) => s + i.price * i.quantity, 0),
+        status: 'pending',
+        statusText: '待支付',
+        createdAt: new Date().toLocaleString('zh-CN'),
+        address: addresses.value[0] || null,
+      };
+      allOrders.value.unshift(order);
+      return order;
+    }
+
+    function payOrder(order) {
+      showModal('模拟支付', `确认支付 ¥${order.totalAmount.toFixed(2)} 吗？`, 'confirm', () => {
+        order.status = 'paid';
+        order.statusText = '待发货';
+        showToast('支付成功！', 'success');
+      });
+    }
+
+    function confirmReceive(order) {
+      showModal('确认收货', '确认已收到商品吗？', 'confirm', () => {
+        order.status = 'completed';
+        order.statusText = '已完成';
+        showToast('已确认收货', 'success');
+      });
+    }
+
+    function shipOrder(order) {
+      order.status = 'shipped';
+      order.statusText = '待收货';
+      showToast('已发货', 'success');
+    }
+
+    function reorderFromOrder(order) {
+      order.items.forEach(item => {
+        const product = allProducts.value.find(p => p.id === item.productId);
+        if (product) addToCart(product, item.quantity);
+      });
+      navigateTo('cart');
+    }
+
+    function viewOrderDetail(order) {
+      showModal('订单详情', `订单号: ${order.orderNo}\n状态: ${order.statusText}\n金额: ¥${order.totalAmount.toFixed(2)}\n下单时间: ${order.createdAt}\n商品: ${order.items.map(i => i.name).join(', ')}`, 'info');
+    }
+
+    // Generate mock orders
+    onMounted(() => {
+      const statuses = [
+        { status: 'pending', statusText: '待支付' },
+        { status: 'paid', statusText: '待发货' },
+        { status: 'shipped', statusText: '待收货' },
+        { status: 'completed', statusText: '已完成' },
+        { status: 'cancelled', statusText: '已取消' },
+      ];
+      for (let i = 0; i < 12; i++) {
+        const st = statuses[i % 5];
+        const items = allProducts.value.slice(i % allProducts.value.length, (i % allProducts.value.length) + (i % 3) + 1).map(p => ({
+          id: p.id, productId: p.id, name: p.name, image: p.image, price: p.price, quantity: (i % 3) + 1, spec: ''
+        }));
+        allOrders.value.push({
+          id: i + 1,
+          orderNo: 'YP20241' + String(i).padStart(5, '0'),
+          userId: (i % 4) + 1,
+          userName: mockUsers.value[(i % 4)]?.nickname || '用户',
+          items,
+          totalAmount: items.reduce((s, it) => s + it.price * it.quantity, 0),
+          ...st,
+          createdAt: `2024-${String(10 + (i % 3)).padStart(2,'0')}-${String(15 - i).padStart(2,'0')} ${String(9 + i).padStart(2,'0')}:${String(30 + i).padStart(2,'0')}`,
+        });
+      }
+    });
+
+    // ========== USER CENTER ==========
+    const userTab = ref('overview');
+    const profileForm = reactive({ nickname: '', gender: 'male', birthday: '', email: '', bio: '' });
+    const showPasswordModal = ref(false);
+    const showAddressForm = ref(false);
+    const editingAddress = ref(null);
+    const addressForm = reactive({ name: '', phone: '', province: '', city: '', district: '', detail: '', isDefault: false });
+
+    const userMenuItems = [
+      { key: 'overview', label: '个人中心', icon: 'fas fa-home' },
+      { key: 'profile', label: '个人信息', icon: 'fas fa-user-edit' },
+      { key: 'favorites', label: '我的收藏', icon: 'fas fa-heart' },
+      { key: 'address', label: '收货地址', icon: 'fas fa-map-marker-alt' },
+      { key: 'security', label: '账户安全', icon: 'fas fa-shield-alt' },
+    ];
+
+    const userStats = computed(() => [
+      { label: '待付款', value: myOrders.value.filter(o => o.status === 'pending').length, color: '#FF9500', action: () => { orderTabKey.value = 'pending'; navigateTo('orders'); } },
+      { label: '待收货', value: myOrders.value.filter(o => o.status === 'shipped').length, color: '#007AFF', action: () => { orderTabKey.value = 'shipped'; navigateTo('orders'); } },
+      { label: '已完成', value: myOrders.value.filter(o => o.status === 'completed').length, color: '#34C759' },
+      { label: '收藏', value: favorites.value.length, color: '#FF3B30' },
+    ]);
+
+    const quickActions = computed(() => [
+      { label: '待付款', icon: 'fas fa-credit-card', color: '#FF9500', badge: myOrders.value.filter(o => o.status === 'pending').length, handler: () => { orderTabKey.value = 'pending'; navigateTo('orders'); } },
+      { label: '待发货', icon: 'fas fa-box', color: '#007AFF', badge: myOrders.value.filter(o => o.status === 'paid').length, handler: () => { orderTabKey.value = 'paid'; navigateTo('orders'); } },
+      { label: '待收货', icon: 'fas fa-truck', color: '#AF52DE', badge: myOrders.value.filter(o => o.status === 'shipped').length, handler: () => { orderTabKey.value = 'shipped'; navigateTo('orders'); } },
+      { label: '我的收藏', icon: 'fas fa-heart', color: '#FF3B30', handler: () => { userTab.value = 'favorites'; } },
+      { label: '收货地址', icon: 'fas fa-map-marker-alt', color: '#34C759', handler: () => { userTab.value = 'address'; } },
+    ]);
+
+    watch(() => currentUser.value, (u) => {
+      if (u) { Object.assign(profileForm, { nickname: u.nickname || '', email: u.email || '', gender: 'male', birthday: '', bio: '' }); }
+    }, { immediate: true });
+
+    function saveProfile() {
+      if (currentUser.value) {
+        currentUser.value.nickname = profileForm.nickname;
+        currentUser.value.email = profileForm.email;
+        localStorage.setItem('youpin_user', JSON.stringify(currentUser.value));
+      }
+      showToast('个人信息已保存', 'success');
+    }
+
+    // Addresses
+    const addresses = ref([
+      { id: 1, name: '张三', phone: '13800138000', province: '北京市', city: '市辖区', district: '朝阳区', detail: '建国路88号SOHO现代城A座1001', isDefault: true, tag: '家' },
+      { id: 2, name: '张三', phone: '13800138000', province: '上海市', city: '市辖区', district: '浦东新区', detail: '张江高科技园区博云路2号', isDefault: false, tag: '公司' },
+    ]);
+
+    function editAddress(addr) {
+      editingAddress.value = addr;
+      Object.assign(addressForm, { ...addr });
+      showAddressForm.value = true;
+    }
+    function saveAddress() {
+      if (editingAddress.value) {
+        Object.assign(editingAddress.value, { ...addressForm });
+      } else {
+        addresses.value.push({ id: Date.now(), ...addressForm });
+      }
+      if (addressForm.isDefault) addresses.value.forEach(a => { if (a.id !== (editingAddress.value?.id || 0)) a.isDefault = false; });
+      showAddressForm.value = false;
+      editingAddress.value = null;
+      Object.assign(addressForm, { name: '', phone: '', province: '', city: '', district: '', detail: '', isDefault: false });
+      showToast('地址已保存', 'success');
+    }
+    function deleteAddress(id) {
+      showModal('删除地址', '确定删除这个收货地址吗？', 'confirm', () => {
+        addresses.value = addresses.value.filter(a => a.id !== id);
+        showToast('地址已删除', 'info');
+      });
+    }
+    function setDefaultAddress(id) {
+      addresses.value.forEach(a => a.isDefault = (a.id === id));
+      showToast('已设为默认地址', 'success');
+    }
+
+    // ========== MESSAGES ==========
+    const messages = ref([
+      { id: 1, user: '小明同学', content: '这个商城太棒了！商品质量好，发货也快，下次还来！', time: '2024-10-15 14:30', likes: 23, liked: false, isAdmin: false, replies: [{ id: 1, content: '感谢您的支持！祝您购物愉快~ 😊' }], showReply: false, replyText: '' },
+      { id: 2, user: '花花', content: '请问你们的退货政策是什么样的？买了一件衣服尺码不合适想退换。', time: '2024-10-14 10:22', likes: 8, liked: false, isAdmin: false, replies: [{ id: 2, content: '您好，我们支持7天无理由退换货哦，请在"我的订单"中申请退换即可~' }], showReply: false, replyText: '' },
+      { id: 3, user: '大壮哥', content: '刚入手的耳机音质超赞！降噪效果也很好，在地铁上终于可以安静听歌了。', time: '2024-10-13 18:45', likes: 45, liked: false, isAdmin: false, replies: [], showReply: false, replyText: '' },
+      { id: 4, user: '小丽', content: '建议增加更多护肤品品牌，现在选择有点少~', time: '2024-10-12 09:15', likes: 12, liked: false, isAdmin: false, replies: [{ id: 3, content: '感谢您的宝贵建议！我们正在积极引入更多优质品牌，敬请期待~ 🎉' }], showReply: false, replyText: '' },
+    ]);
+    const newMessage = ref('');
+
+    function postMessage() {
+      if (!isLoggedIn.value) { showToast('请先登录', 'warning'); navigateTo('login'); return; }
+      if (!newMessage.value.trim()) return;
+      messages.value.unshift({
+        id: Date.now(), user: currentUser.value.nickname, content: newMessage.value.trim(),
+        time: new Date().toLocaleString('zh-CN'), likes: 0, liked: false, isAdmin: currentUser.value.role === 'admin',
+        replies: [], showReply: false, replyText: ''
+      });
+      newMessage.value = '';
+      showToast('留言发表成功', 'success');
+    }
+
+    function toggleLikeMessage(msg) { msg.liked = !msg.liked; msg.likes += msg.liked ? 1 : -1; }
+
+    function replyToMessage(msg) {
+      if (!msg.replyText?.trim()) return;
+      msg.replies.push({ id: Date.now(), content: msg.replyText.trim() });
+      msg.replyText = '';
+      msg.showReply = false;
+      showToast('回复成功', 'success');
+    }
+
+    function deleteMessage(id) {
+      showModal('删除留言', '确定删除这条留言吗？', 'confirm', () => {
+        messages.value = messages.value.filter(m => m.id !== id);
+        showToast('留言已删除', 'info');
+      });
+    }
+
+    function adminReplyMessage(msg) {
+      const reply = prompt('请输入回复内容：');
+      if (reply?.trim()) {
+        msg.replies.push({ id: Date.now(), content: reply.trim() });
+        showToast('回复成功', 'success');
+      }
+    }
+
+    // ========== CHAT ==========
+    const chatOpen = ref(false);
+    const chatInput = ref('');
+    const chatMessages = ref([
+      { type: 'system', text: '欢迎来到优品商城在线客服，有什么可以帮您的？' },
+      { from: 'agent', text: '您好！我是智能客服小优，很高兴为您服务~ 😊 您可以问我关于商品、订单、退换货等问题哦！' },
+    ]);
+    const quickQuestions = ['怎么退货？', '发货时间？', '有优惠券吗？', '支付方式', '转人工'];
+
+    const autoReplies = {
+      '退货': '我们支持7天无理由退换货，请在"我的订单"中找到对应订单，点击"申请退换"即可。退款将在审核通过后1-3个工作日内到账。',
+      '发货': '下单后我们会在24小时内发货（周末及节假日顺延），一般2-5天送达。您可以在"我的订单"中查看物流信息。',
+      '优惠': '当前活动：新用户注册送100积分，满199减20，满399减50！更多优惠请关注首页活动~',
+      '支付': '我们支持微信支付、支付宝、银联卡等多种支付方式，安全便捷！',
+      '人工': '正在为您转接人工客服，请稍候... 当前排队人数：2人，预计等待时间：3分钟。',
+      '你好': '您好！很高兴为您服务，请问有什么可以帮助您的？😊',
+      '谢谢': '不客气！如果还有其他问题随时可以问我哦~ 祝您购物愉快！🎉',
+    };
+
+    function sendChatMessage(text) {
+      if (!text?.trim()) return;
+      chatMessages.value.push({ from: 'user', text: text.trim() });
+      chatInput.value = '';
+      setTimeout(() => {
+        let reply = '感谢您的咨询！如需更多帮助，可以描述您的具体问题，或输入"人工"转接人工客服哦~';
+        for (const [key, val] of Object.entries(autoReplies)) {
+          if (text.includes(key)) { reply = val; break; }
+        }
+        chatMessages.value.push({ from: 'agent', text: reply });
+      }, 800);
+    }
+
+    // ========== ADMIN ==========
+    const adminMenus = [
+      { key: 'admin-dashboard', label: '仪表盘', icon: 'fas fa-tachometer-alt' },
+      { key: 'admin-products', label: '商品管理', icon: 'fas fa-box-open' },
+      { key: 'admin-orders', label: '订单管理', icon: 'fas fa-clipboard-list', badge: 3 },
+      { key: 'admin-users', label: '用户管理', icon: 'fas fa-users' },
+      { key: 'admin-stats', label: '数据统计', icon: 'fas fa-chart-bar' },
+      { key: 'admin-messages', label: '留言管理', icon: 'fas fa-comments' },
+    ];
+
+    // Dashboard
+    const dashboardStats = computed(() => [
+      { label: '今日销售额', value: '¥12,580', icon: 'fas fa-yen-sign', gradient: 'gradient-primary', trend: 12.5 },
+      { label: '订单总数', value: allOrders.value.length.toString(), icon: 'fas fa-shopping-bag', gradient: 'gradient-blue', trend: 8.3 },
+      { label: '注册用户', value: mockUsers.value.length.toString(), icon: 'fas fa-users', gradient: 'gradient-green', trend: 15.2 },
+      { label: '商品总数', value: allProducts.value.length.toString(), icon: 'fas fa-boxes', gradient: 'gradient-purple', trend: -2.1 },
+    ]);
+
+    const chartPeriod = ref('7天');
+    let salesChartInstance = null;
+    let pieChartInstance = null;
+
+    function initDashboardCharts() {
+      // Sales Chart
+      const salesEl = document.getElementById('salesChart');
+      if (salesEl) {
+        if (salesChartInstance) salesChartInstance.destroy();
+        const labels = chartPeriod.value === '7天'
+          ? ['周一','周二','周三','周四','周五','周六','周日']
+          : Array.from({length: 30}, (_, i) => `${i+1}日`);
+        const data1 = labels.map(() => Math.floor(Math.random() * 5000 + 3000));
+        const data2 = labels.map(() => Math.floor(Math.random() * 80 + 30));
+        salesChartInstance = new Chart(salesEl, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              { label: '销售额(¥)', data: data1, borderColor: '#FF6B35', backgroundColor: 'rgba(255,107,53,0.1)', fill: true, tension: 0.4, yAxisID: 'y' },
+              { label: '订单量', data: data2, borderColor: '#007AFF', backgroundColor: 'rgba(0,122,255,0.1)', fill: true, tension: 0.4, yAxisID: 'y1' }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: { y: { position: 'left', grid: { display: false } }, y1: { position: 'right', grid: { drawOnChartArea: false } } }
+          }
+        });
+      }
+      // Pie Chart
+      const pieEl = document.getElementById('orderPieChart');
+      if (pieEl) {
+        if (pieChartInstance) pieChartInstance.destroy();
+        pieChartInstance = new Chart(pieEl, {
+          type: 'doughnut',
+          data: {
+            labels: ['待支付','待发货','待收货','已完成','已取消'],
+            datasets: [{ data: [
+              allOrders.value.filter(o=>o.status==='pending').length,
+              allOrders.value.filter(o=>o.status==='paid').length,
+              allOrders.value.filter(o=>o.status==='shipped').length,
+              allOrders.value.filter(o=>o.status==='completed').length,
+              allOrders.value.filter(o=>o.status==='cancelled').length
+            ], backgroundColor: ['#FF9500','#007AFF','#AF52DE','#34C759','#8E8E93'] }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+      }
+    }
+
+    watch(chartPeriod, () => nextTick(() => initDashboardCharts()));
+
+    // Stats page charts
+    function initStatsCharts() {
+      const catEl = document.getElementById('categorySalesChart');
+      if (catEl) {
+        new Chart(catEl, {
+          type: 'pie',
+          data: {
+            labels: categories.value.map(c => c.name),
+            datasets: [{ data: categories.value.map(() => Math.floor(Math.random() * 10000 + 2000)),
+              backgroundColor: ['#007AFF','#FF6B35','#AF52DE','#34C759','#FF3B30','#FF9500'] }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+      }
+      const userEl = document.getElementById('userGrowthChart');
+      if (userEl) {
+        new Chart(userEl, {
+          type: 'line',
+          data: {
+            labels: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+            datasets: [{ label: '新增用户', data: [120,145,190,210,280,320,350,410,380,450,520,580],
+              borderColor: '#34C759', backgroundColor: 'rgba(52,199,89,0.1)', fill: true, tension: 0.4 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      }
+      const revEl = document.getElementById('revenueChart');
+      if (revEl) {
+        new Chart(revEl, {
+          type: 'bar',
+          data: {
+            labels: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+            datasets: [
+              { label: '销售额', data: [85000,72000,98000,110000,95000,128000,135000,142000,118000,155000,168000,180000],
+                backgroundColor: 'rgba(255,107,53,0.8)', borderRadius: 6 },
+              { label: '利润', data: [25000,21000,29000,33000,28000,38000,40000,42000,35000,46000,50000,54000],
+                backgroundColor: 'rgba(0,122,255,0.8)', borderRadius: 6 }
+            ]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+        });
+      }
+    }
+
+    // Admin Products
+    const adminProductSearch = ref('');
+    const adminProductCategory = ref('');
+    const adminProductStatus = ref('');
+    const showProductForm = ref(false);
+    const editingProduct = ref(null);
+    const productForm = reactive({ name: '', categoryId: '', brand: '', price: '', originalPrice: '', stock: '', image: '', description: '' });
+
+    const adminFilteredProducts = computed(() => {
+      let list = [...allProducts.value];
+      if (adminProductSearch.value) list = list.filter(p => p.name.includes(adminProductSearch.value));
+      if (adminProductCategory.value) list = list.filter(p => p.categoryId === Number(adminProductCategory.value));
+      return list;
+    });
+
+    function openProductForm(product = null) {
+      editingProduct.value = product;
+      if (product) { Object.assign(productForm, { name: product.name, categoryId: product.categoryId, brand: product.brand || '', price: product.price, originalPrice: product.originalPrice || '', stock: product.stock, image: product.image, description: product.description || '' }); }
+      else { Object.assign(productForm, { name: '', categoryId: '', brand: '', price: '', originalPrice: '', stock: '', image: '', description: '' }); }
+      showProductForm.value = true;
+    }
+
+    function saveProduct() {
+      if (editingProduct.value) {
+        Object.assign(editingProduct.value, {
+          name: productForm.name, categoryId: Number(productForm.categoryId), brand: productForm.brand,
+          price: Number(productForm.price), originalPrice: Number(productForm.originalPrice) || null,
+          stock: Number(productForm.stock), image: productForm.image || productImages[0], description: productForm.description
+        });
+        showToast('商品已更新', 'success');
+      } else {
+        allProducts.value.push({
+          id: allProducts.value.length + 100,
+          name: productForm.name, categoryId: Number(productForm.categoryId), brand: productForm.brand,
+          price: Number(productForm.price), originalPrice: Number(productForm.originalPrice) || null,
+          stock: Number(productForm.stock), image: productForm.image || productImages[Math.floor(Math.random() * productImages.length)],
+          images: [productForm.image || productImages[0]], description: productForm.description,
+          sales: 0, reviews: 0, rating: 5.0, tag: '新品', active: true
+        });
+        showToast('商品已添加', 'success');
+      }
+      showProductForm.value = false;
+    }
+
+    function deleteProduct(id) {
+      showModal('删除商品', '确定删除这个商品吗？此操作不可恢复。', 'confirm', () => {
+        allProducts.value = allProducts.value.filter(p => p.id !== id);
+        showToast('商品已删除', 'info');
+      });
+    }
+
+    // Admin Orders
+    const adminOrderSearch = ref('');
+    const adminOrderStatus = ref('');
+    const adminFilteredOrders = computed(() => {
+      let list = [...allOrders.value];
+      if (adminOrderSearch.value) list = list.filter(o => o.orderNo.includes(adminOrderSearch.value) || o.userName?.includes(adminOrderSearch.value));
+      if (adminOrderStatus.value) list = list.filter(o => o.status === adminOrderStatus.value);
+      return list;
+    });
+
+    const orderAdminStats = computed(() => [
+      { label: '全部订单', value: allOrders.value.length, color: '#333' },
+      { label: '待发货', value: allOrders.value.filter(o => o.status === 'paid').length, color: '#007AFF' },
+      { label: '待收货', value: allOrders.value.filter(o => o.status === 'shipped').length, color: '#AF52DE' },
+      { label: '已完成', value: allOrders.value.filter(o => o.status === 'completed').length, color: '#34C759' },
+    ]);
+
+    // Admin Users
+    const adminUserSearch = ref('');
+    const adminFilteredUsers = computed(() => {
+      let list = [...mockUsers.value];
+      if (adminUserSearch.value) list = list.filter(u => u.username.includes(adminUserSearch.value) || u.nickname.includes(adminUserSearch.value) || u.email.includes(adminUserSearch.value));
+      return list;
+    });
+
+    // ========== UTILITIES ==========
+    function stringToColor(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      const colors = ['#FF6B35','#007AFF','#34C759','#AF52DE','#FF3B30','#FF9500','#5AC8FA','#64D2FF'];
+      return colors[Math.abs(hash) % colors.length];
+    }
+
+    return {
+      // Routing
+      currentPage, navigateTo, mobileMenuOpen, adminSidebarOpen,
+      // Toast & Modal
+      toasts, showToast, modal, showModal,
+      // Auth
+      currentUser, isLoggedIn, isAdmin, loginForm, registerForm, showPassword, loginLoading, passwordStrength,
+      handleLogin, handleRegister, handleLogout, checkAuth,
+      // Categories
+      categories, getCategoryName,
+      // Products
+      allProducts, recommendedProducts, hotProducts, newProducts, topProducts, flashSaleProducts, flashCountdown,
+      // Banner
+      banners, currentBanner, nextBanner, prevBanner,
+      // Product listing
+      searchKeyword, filterCategory, filterPriceRange, filterPriceMin, filterPriceMax,
+      filterInStock, filterOnSale, currentSort, currentPageNum, pageSize,
+      priceRanges, sortOptions, selectedCategoryName, filteredProducts, totalPages, paginatedProducts,
+      doSearch, filterByCategory, applyPriceFilter, resetFilters, loadProducts,
+      // Product detail
+      currentProduct, currentImageIndex, detailQuantity, detailTab, selectedSpecs, mockReviews,
+      viewProduct, selectSpec, getProductById,
+      // Cart
+      cartItems, cartSelectAll, cartTotalCount, cartSelectedCount, cartSelectedAmount,
+      addToCart, removeFromCart, updateCartQuantity, toggleSelectAll, removeSelectedFromCart, buyNow, goCheckout,
+      // Favorites
+      favorites, isFavorite, toggleFavorite,
+      // Orders
+      allOrders, myOrders, orderTabKey, orderSearch, orderTabs, filteredOrders,
+      orderStatusClass, payOrder, confirmReceive, shipOrder, reorderFromOrder, viewOrderDetail,
+      // User center
+      userTab, profileForm, showPasswordModal, showAddressForm, editingAddress, addressForm,
+      userMenuItems, userStats, quickActions,
+      saveProfile, addresses, editAddress, saveAddress, deleteAddress, setDefaultAddress,
+      // Messages
+      messages, newMessage, postMessage, toggleLikeMessage, replyToMessage, deleteMessage, adminReplyMessage,
+      // Chat
+      chatOpen, chatInput, chatMessages, quickQuestions, sendChatMessage,
+      // Admin
+      adminMenus, dashboardStats, chartPeriod,
+      adminProductSearch, adminProductCategory, adminProductStatus, showProductForm, editingProduct, productForm,
+      adminFilteredProducts, openProductForm, saveProduct, deleteProduct,
+      adminOrderSearch, adminOrderStatus, adminFilteredOrders, orderAdminStats,
+      adminUserSearch, adminFilteredUsers, mockUsers,
+      // Utilities
+      stringToColor,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
